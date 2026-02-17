@@ -1,3 +1,36 @@
+## Session 33 - Feature #26: Filings API filters by offering amount and relevance score
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified GET /api/edgar/filings supports minOffering, maxOffering, minRelevance params
+- Implementation uses >= for min filters, <= for max filter
+- Proper numeric casting for offering amount comparisons
+- Integer parsing for relevance score comparison
+
+### Code structure verification (10/10 checks passed):
+1. ✅ minOffering param extracted from searchParams
+2. ✅ maxOffering param extracted from searchParams
+3. ✅ minRelevance param extracted from searchParams
+4. ✅ minOffering filter uses >= operator
+5. ✅ maxOffering filter uses <= operator
+6. ✅ minRelevance filter uses >= operator
+7. ✅ minRelevance properly parsed as integer
+8. ✅ Offering amounts cast to numeric for comparison
+9. ✅ minRelevance filters on filingEnrichments table
+10. ✅ Conditions combined with AND logic
+
+### Verification:
+- Lint: 0 errors (only warnings)
+- TypeScript: passes cleanly
+- Created test script: scripts/test-offering-relevance.ts
+
+### Feature status:
+- Feature #26: PASSING ✅
+
+### Current completion: 34/78 features passing
+
+---
+
 ## Session 32 - Feature #25: Filings API filters by industry and state
 Date: 2026-02-17
 
