@@ -131,71 +131,54 @@ export async function POST(req: NextRequest) {
         }
 
         // Insert into database with deduplication
-        try {
-          await db
-            .insert(formDFilings)
-            .values({
-              cik: parsed.cik,
-              accessionNumber: parsed.accessionNumber,
-              companyName: parsed.companyName,
-              entityType: parsed.entityType,
-              stateOfInc: parsed.stateOfInc,
-              sicCode: parsed.sicCode,
-              filingDate: parsed.filingDate,
-              isAmendment: parsed.isAmendment,
-              totalOffering: parsed.totalOffering?.toString() ?? null,
-              amountSold: parsed.amountSold?.toString() ?? null,
-              amountRemaining: parsed.amountRemaining?.toString() ?? null,
-              numInvestors: parsed.numInvestors,
-              minInvestment: parsed.minInvestment?.toString() ?? null,
-              revenueRange: parsed.revenueRange,
-              industryGroup: parsed.industryGroup,
-              issuerStreet: parsed.issuerStreet,
-              issuerCity: parsed.issuerCity,
-              issuerState: parsed.issuerState,
-              issuerZip: parsed.issuerZip,
-              issuerPhone: parsed.issuerPhone,
-              filingUrl: filingUrl,
-              xmlUrl: xmlUrl,
-              firstSaleDate: parsed.firstSaleDate,
-              yetToOccur: parsed.yetToOccur,
-              moreThanOneYear: parsed.moreThanOneYear,
-              federalExemptions: parsed.federalExemptions,
-            })
-            .onConflictDoNothing({ target: formDFilings.accessionNumber });
+        // Use returning() to detect if the insert actually happened
+        const result = await db
+          .insert(formDFilings)
+          .values({
+            cik: parsed.cik,
+            accessionNumber: parsed.accessionNumber,
+            companyName: parsed.companyName,
+            entityType: parsed.entityType,
+            stateOfInc: parsed.stateOfInc,
+            sicCode: parsed.sicCode,
+            filingDate: parsed.filingDate,
+            isAmendment: parsed.isAmendment,
+            totalOffering: parsed.totalOffering?.toString() ?? null,
+            amountSold: parsed.amountSold?.toString() ?? null,
+            amountRemaining: parsed.amountRemaining?.toString() ?? null,
+            numInvestors: parsed.numInvestors,
+            minInvestment: parsed.minInvestment?.toString() ?? null,
+            revenueRange: parsed.revenueRange,
+            industryGroup: parsed.industryGroup,
+            issuerStreet: parsed.issuerStreet,
+            issuerCity: parsed.issuerCity,
+            issuerState: parsed.issuerState,
+            issuerZip: parsed.issuerZip,
+            issuerPhone: parsed.issuerPhone,
+            filingUrl: filingUrl,
+            xmlUrl: xmlUrl,
+            firstSaleDate: parsed.firstSaleDate,
+            yetToOccur: parsed.yetToOccur,
+            moreThanOneYear: parsed.moreThanOneYear,
+            federalExemptions: parsed.federalExemptions,
+          })
+          .onConflictDoNothing({ target: formDFilings.accessionNumber })
+          .returning({ id: formDFilings.id });
 
-          // onConflictDoNothing succeeded - count as ingested
+        // If returning() returns empty array, the insert was skipped due to conflict
+        if (result.length === 0) {
+          skipped++;
+          details.push({
+            accessionNumber: parsed.accessionNumber,
+            status: "skipped",
+            error: "Duplicate accession number",
+          });
+        } else {
           ingested++;
           details.push({
             accessionNumber: parsed.accessionNumber,
             status: "ingested",
           });
-        } catch (insertError) {
-          const errMsg =
-            insertError instanceof Error
-              ? insertError.message
-              : String(insertError);
-
-          // Check for duplicate key error
-          if (
-            errMsg.includes("unique") ||
-            errMsg.includes("duplicate") ||
-            errMsg.includes("23505")
-          ) {
-            skipped++;
-            details.push({
-              accessionNumber: parsed.accessionNumber,
-              status: "skipped",
-              error: "Duplicate accession number",
-            });
-          } else {
-            errors++;
-            details.push({
-              accessionNumber: parsed.accessionNumber,
-              status: "error",
-              error: errMsg,
-            });
-          }
         }
       } catch (processingError) {
         const errMsg =
