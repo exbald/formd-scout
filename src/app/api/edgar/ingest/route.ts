@@ -1,16 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { formDFilings } from "@/lib/schema";
+import {
+  fetchRecentFormDFilings,
+  fetchFilingIndex,
+  fetchFormDXml,
+  buildFormDXmlUrl,
+  buildFilingUrl,
+} from "@/lib/edgar/fetcher";
+import { parseFormDXml, validateParsedFiling } from "@/lib/edgar/parser";
+import { extractFilingInfo } from "@/lib/edgar/types";
 
 /**
  * POST /api/edgar/ingest
  *
- * Ingests Form D filing data into the database.
+ * Fetches Form D filings from SEC EDGAR EFTS endpoint, parses XML,
+ * and inserts into PostgreSQL.
+ *
  * Protected by x-api-key header check against INGEST_API_KEY env var.
  *
- * Accepts a JSON body with:
- *   - filings: array of filing objects to insert
- *   - OR single filing fields at top level for convenience
+ * Request body:
+ *   - startDate?: string (YYYY-MM-DD, defaults to today)
+ *   - endDate?: string (YYYY-MM-DD, defaults to today)
+ *
+ * Response:
+ *   - ingested: number of filings successfully inserted
+ *   - skipped: number of filings skipped (duplicates)
+ *   - errors: number of filings that failed to process
+ *   - details: array of per-filing results with accessionNumber, status, error?
  */
 export async function POST(req: NextRequest) {
   // Verify API key
@@ -22,12 +39,36 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
 
-    // Support both single filing and batch
-    const filingsToInsert = Array.isArray(body.filings)
-      ? body.filings
-      : [body];
+    // Parse date range - default to today if not provided
+    const today = new Date();
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (body.startDate) {
+      startDate = new Date(body.startDate);
+    } else {
+      startDate = today;
+    }
+
+    if (body.endDate) {
+      endDate = new Date(body.endDate);
+    } else {
+      endDate = today;
+    }
+
+    // Validate dates
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return NextResponse.json(
+        { error: "Invalid date format. Use YYYY-MM-DD." },
+        { status: 400 }
+      );
+    }
+
+    // Fetch filings from SEC EDGAR EFTS endpoint
+    const hits = await fetchRecentFormDFilings(startDate, endDate);
 
     let ingested = 0;
     let skipped = 0;
@@ -38,76 +79,135 @@ export async function POST(req: NextRequest) {
       error?: string;
     }> = [];
 
-    for (const filing of filingsToInsert) {
-      if (!filing.accessionNumber || !filing.companyName || !filing.cik) {
+    // Process each filing
+    for (const hit of hits) {
+      // Extract basic info from EFTS hit
+      const info = extractFilingInfo(hit);
+
+      if (!info.accessionNumber || !info.cik) {
         errors++;
         details.push({
-          accessionNumber: filing.accessionNumber || "unknown",
+          accessionNumber: info.accessionNumber || "unknown",
           status: "error",
-          error: "Missing required fields: accessionNumber, companyName, cik",
+          error: "Missing accessionNumber or CIK in EFTS hit",
         });
         continue;
       }
 
       try {
-        await db
-          .insert(formDFilings)
-          .values({
-            cik: filing.cik,
-            accessionNumber: filing.accessionNumber,
-            companyName: filing.companyName,
-            entityType: filing.entityType ?? null,
-            stateOfInc: filing.stateOfInc ?? null,
-            sicCode: filing.sicCode ?? null,
-            filingDate: filing.filingDate || new Date().toISOString().split("T")[0],
-            isAmendment: filing.isAmendment ?? false,
-            totalOffering: filing.totalOffering ?? null,
-            amountSold: filing.amountSold ?? null,
-            amountRemaining: filing.amountRemaining ?? null,
-            numInvestors: filing.numInvestors ?? null,
-            minInvestment: filing.minInvestment ?? null,
-            revenueRange: filing.revenueRange ?? null,
-            industryGroup: filing.industryGroup ?? null,
-            issuerStreet: filing.issuerStreet ?? null,
-            issuerCity: filing.issuerCity ?? null,
-            issuerState: filing.issuerState ?? null,
-            issuerZip: filing.issuerZip ?? null,
-            issuerPhone: filing.issuerPhone ?? null,
-            filingUrl: filing.filingUrl ?? null,
-            xmlUrl: filing.xmlUrl ?? null,
-            firstSaleDate: filing.firstSaleDate ?? null,
-            yetToOccur: filing.yetToOccur ?? null,
-            moreThanOneYear: filing.moreThanOneYear ?? null,
-            federalExemptions: filing.federalExemptions ?? null,
-          })
-          .onConflictDoNothing({ target: formDFilings.accessionNumber });
+        // Fetch filing index to find primary XML document
+        const indexResult = await fetchFilingIndex(info.cik, info.accessionNumber);
 
-        ingested++;
-        details.push({
-          accessionNumber: filing.accessionNumber,
-          status: "ingested",
-        });
-      } catch (insertError) {
-        const errMsg =
-          insertError instanceof Error
-            ? insertError.message
-            : String(insertError);
-
-        if (errMsg.includes("unique") || errMsg.includes("duplicate")) {
-          skipped++;
-          details.push({
-            accessionNumber: filing.accessionNumber,
-            status: "skipped",
-            error: "Duplicate accession number",
-          });
-        } else {
+        if (!indexResult.primaryDocument) {
           errors++;
           details.push({
-            accessionNumber: filing.accessionNumber,
+            accessionNumber: info.accessionNumber,
             status: "error",
-            error: errMsg,
+            error: "Could not find primary XML document in filing index",
           });
+          continue;
         }
+
+        // Build URLs
+        const xmlUrl = buildFormDXmlUrl(
+          info.cik,
+          info.accessionNumber,
+          indexResult.primaryDocument
+        );
+        const filingUrl = buildFilingUrl(info.cik, info.accessionNumber);
+
+        // Fetch and parse the Form D XML
+        const xmlString = await fetchFormDXml(xmlUrl);
+        const parsed = parseFormDXml(xmlString, info.accessionNumber, info.cik);
+
+        if (!validateParsedFiling(parsed)) {
+          errors++;
+          details.push({
+            accessionNumber: info.accessionNumber,
+            status: "error",
+            error: "Failed to parse Form D XML or missing required fields",
+          });
+          continue;
+        }
+
+        // Insert into database with deduplication
+        try {
+          await db
+            .insert(formDFilings)
+            .values({
+              cik: parsed.cik,
+              accessionNumber: parsed.accessionNumber,
+              companyName: parsed.companyName,
+              entityType: parsed.entityType,
+              stateOfInc: parsed.stateOfInc,
+              sicCode: parsed.sicCode,
+              filingDate: parsed.filingDate,
+              isAmendment: parsed.isAmendment,
+              totalOffering: parsed.totalOffering?.toString() ?? null,
+              amountSold: parsed.amountSold?.toString() ?? null,
+              amountRemaining: parsed.amountRemaining?.toString() ?? null,
+              numInvestors: parsed.numInvestors,
+              minInvestment: parsed.minInvestment?.toString() ?? null,
+              revenueRange: parsed.revenueRange,
+              industryGroup: parsed.industryGroup,
+              issuerStreet: parsed.issuerStreet,
+              issuerCity: parsed.issuerCity,
+              issuerState: parsed.issuerState,
+              issuerZip: parsed.issuerZip,
+              issuerPhone: parsed.issuerPhone,
+              filingUrl: filingUrl,
+              xmlUrl: xmlUrl,
+              firstSaleDate: parsed.firstSaleDate,
+              yetToOccur: parsed.yetToOccur,
+              moreThanOneYear: parsed.moreThanOneYear,
+              federalExemptions: parsed.federalExemptions,
+            })
+            .onConflictDoNothing({ target: formDFilings.accessionNumber });
+
+          // onConflictDoNothing succeeded - count as ingested
+          ingested++;
+          details.push({
+            accessionNumber: parsed.accessionNumber,
+            status: "ingested",
+          });
+        } catch (insertError) {
+          const errMsg =
+            insertError instanceof Error
+              ? insertError.message
+              : String(insertError);
+
+          // Check for duplicate key error
+          if (
+            errMsg.includes("unique") ||
+            errMsg.includes("duplicate") ||
+            errMsg.includes("23505")
+          ) {
+            skipped++;
+            details.push({
+              accessionNumber: parsed.accessionNumber,
+              status: "skipped",
+              error: "Duplicate accession number",
+            });
+          } else {
+            errors++;
+            details.push({
+              accessionNumber: parsed.accessionNumber,
+              status: "error",
+              error: errMsg,
+            });
+          }
+        }
+      } catch (processingError) {
+        const errMsg =
+          processingError instanceof Error
+            ? processingError.message
+            : String(processingError);
+        errors++;
+        details.push({
+          accessionNumber: info.accessionNumber,
+          status: "error",
+          error: errMsg,
+        });
       }
     }
 
@@ -119,8 +219,10 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("Ingestion error:", error);
+    const errMsg =
+      error instanceof Error ? error.message : "Unknown error occurred";
     return NextResponse.json(
-      { error: "Failed to process ingestion request" },
+      { error: "Failed to process ingestion request", details: errMsg },
       { status: 500 }
     );
   }

@@ -1,3 +1,33 @@
+## Session 8 - Feature #10: Unauthenticated users cannot access dashboard routes
+Date: 2026-02-17
+
+### What was accomplished:
+- Updated `requireAuth()` in src/lib/session.ts to redirect to `/login` instead of `/`
+- Refactored dashboard layout to use server-side auth check:
+  - Created src/app/dashboard/nav.tsx (client component with navigation UI)
+  - Updated src/app/dashboard/layout.tsx to use `requireAuth()` server-side
+- Updated src/proxy.ts (Next.js middleware):
+  - Changed redirect destination from `/` to `/login`
+  - Added sub-route matchers (`/dashboard/:path*`, `/chat/:path*`, `/profile/:path*`)
+- Simplified dashboard pages to rely on layout auth (removed redundant client-side checks)
+
+### Verification details:
+- /dashboard → 307 redirect to /login ✅
+- /dashboard/filings → 307 redirect to /login ✅
+- /dashboard/settings → 307 redirect to /login ✅
+- /dashboard/filings/some-uuid-123 → 307 redirect to /login ✅
+- Login page exists and returns 200 OK
+- Lint: 0 errors, 5 warnings (pre-existing)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase
+
+### Feature status:
+- Feature #10: PASSING ✅
+
+### Current completion: 8/78 features passing
+
+---
+
 ## Session 1 - Feature #2: Database schema applied correctly
 Date: 2026-02-17
 
