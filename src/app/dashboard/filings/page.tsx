@@ -12,6 +12,10 @@ import {
   ChevronRight,
   ExternalLink,
   SlidersHorizontal,
+  Download,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +155,21 @@ const getRelevanceColor = (score: number | null): string => {
   if (score >= 70) return "text-green-600 dark:text-green-400";
   if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
   return "text-gray-500";
+};
+
+// Sortable column type
+type SortableColumn = "companyName" | "filingDate" | "totalOffering" | "industryGroup" | "issuerState" | "relevanceScore";
+
+// Sort indicator component
+const SortIndicator = ({ column, currentSortBy, currentSortOrder }: { column: SortableColumn; currentSortBy: string; currentSortOrder: string }) => {
+  if (currentSortBy !== column) {
+    return <ArrowUpDown className="h-4 w-4 ml-1 opacity-40" />;
+  }
+  return currentSortOrder === "asc" ? (
+    <ArrowUp className="h-4 w-4 ml-1 text-primary" />
+  ) : (
+    <ArrowDown className="h-4 w-4 ml-1 text-primary" />
+  );
 };
 
 export default function FilingsPage() {
@@ -323,6 +342,42 @@ export default function FilingsPage() {
     }
   };
 
+  const handleExportCsv = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      // Apply current filters to export
+      if (search) params.set("search", search);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      if (minOffering) params.set("minOffering", minOffering);
+      if (maxOffering) params.set("maxOffering", maxOffering);
+      if (selectedIndustries.length > 0)
+        params.set("industryGroup", selectedIndustries.join(","));
+      if (selectedStates.length > 0)
+        params.set("state", selectedStates.join(","));
+      if (minRelevance) params.set("minRelevance", minRelevance);
+      if (isAmendment) params.set("isAmendment", isAmendment);
+      if (yetToOccur) params.set("yetToOccur", "true");
+
+      // Trigger download
+      const response = await fetch(`/api/edgar/export?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to export CSV");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `form-d-filings-${new Date().toISOString().split("T")[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error exporting CSV:", error);
+    }
+  };
+
   const hasActiveFilters =
     search ||
     startDate ||
@@ -334,6 +389,20 @@ export default function FilingsPage() {
     minRelevance ||
     isAmendment ||
     yetToOccur;
+
+  // Handle column header click for sorting
+  const handleSort = (column: SortableColumn) => {
+    if (sortBy === column) {
+      // Toggle sort order if same column
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      // Set new sort column with default descending order
+      setSortBy(column);
+      setSortOrder("desc");
+    }
+    // Reset to first page when sorting
+    setPage(1);
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -519,6 +588,14 @@ export default function FilingsPage() {
               <Save className="h-4 w-4 mr-2" />
               Save Filter
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -571,12 +648,60 @@ export default function FilingsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4 font-medium">Company Name</th>
-                    <th className="text-left p-4 font-medium">Filing Date</th>
-                    <th className="text-left p-4 font-medium">Offering</th>
-                    <th className="text-left p-4 font-medium">Industry</th>
-                    <th className="text-left p-4 font-medium">State</th>
-                    <th className="text-left p-4 font-medium">Relevance</th>
+                    <th
+                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                      onClick={() => handleSort("companyName")}
+                    >
+                      <div className="flex items-center">
+                        Company Name
+                        <SortIndicator column="companyName" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                      </div>
+                    </th>
+                    <th
+                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                      onClick={() => handleSort("filingDate")}
+                    >
+                      <div className="flex items-center">
+                        Filing Date
+                        <SortIndicator column="filingDate" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                      </div>
+                    </th>
+                    <th
+                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                      onClick={() => handleSort("totalOffering")}
+                    >
+                      <div className="flex items-center">
+                        Offering
+                        <SortIndicator column="totalOffering" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                      </div>
+                    </th>
+                    <th
+                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                      onClick={() => handleSort("industryGroup")}
+                    >
+                      <div className="flex items-center">
+                        Industry
+                        <SortIndicator column="industryGroup" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                      </div>
+                    </th>
+                    <th
+                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                      onClick={() => handleSort("issuerState")}
+                    >
+                      <div className="flex items-center">
+                        State
+                        <SortIndicator column="issuerState" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                      </div>
+                    </th>
+                    <th
+                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                      onClick={() => handleSort("relevanceScore")}
+                    >
+                      <div className="flex items-center">
+                        Relevance
+                        <SortIndicator column="relevanceScore" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                      </div>
+                    </th>
                     <th className="text-left p-4 font-medium">Status</th>
                     <th className="w-10"></th>
                   </tr>

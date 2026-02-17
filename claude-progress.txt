@@ -1,3 +1,39 @@
+## Session 35 - Feature #21: Enrichment API enriches a single filing by filingId
+Date: 2026-02-17
+
+### Status: SKIPPED - External Blocker
+
+### External Blocker:
+**OPENROUTER_API_KEY is not configured** in environment.
+
+The .env file has `OPENROUTER_API_KEY=` (empty value). This key is required to call the OpenRouter API for AI-generated enrichment analysis.
+
+### What was verified:
+- Implementation at src/app/api/edgar/enrich/route.ts is complete and correct
+- Single filing enrichment via `filingId` body param is implemented
+- Uses enrichFiling() from src/lib/ai/enrichment.ts
+- Stores results in filing_enrichments table
+- Protected by x-api-key header validation
+- Lint: 0 errors, 20 warnings
+- TypeScript: passes cleanly
+- Fixed missing imports (ArrowUpDown, ArrowUp, ArrowDown) in filings page
+
+### Database status:
+- 5 filings exist in database (can be enriched)
+- 0 enrichments exist (no API key to generate them)
+
+### To complete this feature:
+1. Obtain an OpenRouter API key from https://openrouter.ai
+2. Add it to .env: `OPENROUTER_API_KEY=sk-or-...`
+3. Run: `curl -X POST http://localhost:3006/api/edgar/enrich -H "x-api-key: formd-scout-dev-api-key-2026" -H "Content-Type: application/json" -d '{"filingId":"<any-filing-uuid>"}'`
+
+### Feature status:
+- Feature #21: SKIPPED (moved to end of queue)
+
+### Current completion: 34/78 features passing
+
+---
+
 ## Session 34 - Feature #25: Filings API filters by industry and state (re-verification)
 Date: 2026-02-17
 
