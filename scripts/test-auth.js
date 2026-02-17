@@ -1,8 +1,10 @@
 const http = require('http');
 
+const PORT = process.env.PORT || 3010;
+
 function makeRequest(path) {
   return new Promise((resolve, reject) => {
-    const req = http.get(`http://localhost:3010${path}`, (res) => {
+    const req = http.get(`http://localhost:${PORT}${path}`, (res) => {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => resolve({ status: res.statusCode, body: data }));
