@@ -12,9 +12,6 @@ import {
   ChevronRight,
   ExternalLink,
   SlidersHorizontal,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -296,6 +293,8 @@ export default function FilingsPage() {
     setPage(1);
     setSortBy("filingDate");
     setSortOrder("desc");
+    // Clear URL params - push to base route without query string
+    router.push("/dashboard/filings", { scroll: false });
   };
 
   const handleSaveFilter = async () => {
