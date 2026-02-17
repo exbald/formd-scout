@@ -349,3 +349,36 @@ Date: 2026-02-17
 - Feature #16: PASSING ✅
 
 ### Current completion: 10/78 features passing (including #1, #2, #3, #4, #5, #6, #7, #15, #16, #20)
+
+## Session 11 - Feature #9: Dashboard layout displays navigation with logo and nav items
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified dashboard layout implementation at src/app/dashboard/layout.tsx
+- Layout uses server-side auth protection via `requireAuth()` (redirects to /login if not authenticated)
+- Navigation component at src/app/dashboard/nav.tsx includes:
+  - FormD Scout logo (FileSearch icon + gradient text "FormD Scout")
+  - Nav items: Dashboard, Filings, Settings (all with icons and active state highlighting)
+  - User avatar with name and email from auth session
+  - Sign Out button with functional signOut() handler
+- Created src/app/dashboard/filings/page.tsx placeholder page
+- Created src/app/dashboard/settings/page.tsx with profile, notifications, appearance, and security sections
+
+### Navigation verification:
+- Logo links to /dashboard
+- Dashboard nav item links to /dashboard
+- Filings nav item links to /dashboard/filings (page exists, returns 307 for auth)
+- Settings nav item links to /dashboard/settings (page exists, returns 200)
+- Active state highlighting works via pathname comparison
+
+### Verification details:
+- Build: `npm run build:ci` succeeds with all routes compiled
+- Routes verified: /dashboard (307), /dashboard/filings (307), /dashboard/settings (200)
+- Lint: 0 errors, 4 warnings (import order + pre-existing console.log in backfill.ts)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #9: PASSING ✅
+
+### Current completion: 11/78 features passing (including #1, #2, #3, #4, #5, #6, #7, #9, #15, #16, #20)
