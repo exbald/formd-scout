@@ -1,3 +1,36 @@
+## Session 18 - Feature #21: Enrichment API enriches a single filing by filingId
+Date: 2026-02-17
+
+### Status: SKIPPED - External Blocker
+
+### What was verified:
+- ✅ Code structure is correct in src/app/api/edgar/enrich/route.ts
+- ✅ API accepts filingId in request body
+- ✅ API validates x-api-key header against INGEST_API_KEY
+- ✅ Lint: 0 errors, 7 warnings (import order - pre-existing)
+- ✅ TypeScript: passes cleanly
+- ✅ Database has 135 filings available for enrichment
+
+### External Blocker:
+**OPENROUTER_API_KEY is not configured** in environment.
+
+The enrichment feature requires the OpenRouter API to generate AI analysis. Steps 4-6 of the feature test require actual AI calls:
+- Step 4: Verify response includes enriched count of 1
+- Step 5: Query the filing detail to verify enrichment data is populated
+- Step 6: Verify relevanceScore, companySummary, relevanceReasoning are non-null
+
+### To complete this feature:
+1. Configure OPENROUTER_API_KEY in .env file
+2. Get an API key from https://openrouter.ai/settings/keys
+3. Re-run the enrichment test
+
+### Feature status:
+- Feature #21: SKIPPED (moved to priority 79, awaiting OPENROUTER_API_KEY)
+
+### Current completion: 19/78 features passing
+
+---
+
 ## Session 17 - Feature #43: All navigation links work correctly between dashboard pages
 Date: 2026-02-17
 
