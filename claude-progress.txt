@@ -1,3 +1,77 @@
+## Session 24 - Feature #21: Enrichment API enriches a single filing by filingId
+Date: 2026-02-17
+
+### Status: SKIPPED - External Blocker
+
+### External Blocker:
+**OPENROUTER_API_KEY is not configured** in environment.
+
+The enrichment feature requires the OpenRouter API to generate AI analysis. This is an external API that requires:
+1. Sign up at https://openrouter.ai
+2. Create an API key at https://openrouter.ai/settings/keys
+3. Add to .env as OPENROUTER_API_KEY=sk-or-...
+
+### Feature status:
+- Feature #21: SKIPPED (moved to priority 80, awaiting OPENROUTER_API_KEY)
+
+### Current completion: 20/78 features passing
+
+---
+
+## Session 23 - Feature #18: Ingestion deduplicates by accessionNumber unique constraint
+Date: 2026-02-17
+
+### What was accomplished:
+- Fixed a bug in the ingestion endpoint where duplicates were incorrectly counted as "ingested" instead of "skipped"
+- The original code used `onConflictDoNothing()` but then always incremented `ingested` count
+- Fixed by adding `.returning({ id: formDFilings.id })` to detect if insert actually happened
+- When conflict occurs, `returning()` returns empty array (length === 0), correctly identifying duplicates
+
+### Bug fix details (src/app/api/edgar/ingest/route.ts):
+**Before (buggy):**
+```typescript
+await db.insert(formDFilings).values({...})
+  .onConflictDoNothing({ target: formDFilings.accessionNumber });
+// onConflictDoNothing succeeded - count as ingested
+ingested++;  // BUG: always counted as ingested
+```
+
+**After (fixed):**
+```typescript
+const result = await db.insert(formDFilings).values({...})
+  .onConflictDoNothing({ target: formDFilings.accessionNumber })
+  .returning({ id: formDFilings.id });
+
+// If returning() returns empty array, the insert was skipped due to conflict
+if (result.length === 0) {
+  skipped++;
+  details.push({ accessionNumber: parsed.accessionNumber, status: "skipped", error: "Duplicate accession number" });
+} else {
+  ingested++;
+  details.push({ accessionNumber: parsed.accessionNumber, status: "ingested" });
+}
+```
+
+### Test verification (scripts/test-dedup-db.ts):
+1. ✅ Insert test filing → one record created
+2. ✅ Attempt duplicate insert with onConflictDoNothing + returning()
+3. ✅ Returning result length === 0 (conflict detected)
+4. ✅ Original record preserved (company name not changed)
+5. ✅ Database still has exactly 1 record (no duplicate)
+
+### Verification details:
+- Lint: 0 errors, 7 warnings (import order - pre-existing)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds (exit code 0)
+- Database test: All 4 deduplication tests passed
+
+### Feature status:
+- Feature #18: PASSING ✅
+
+### Current completion: 19/78 features passing
+
+---
+
 ## Session 22 - Feature #47: Ingestion handles SEC API failures with retry logic
 Date: 2026-02-17
 

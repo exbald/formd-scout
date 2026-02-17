@@ -321,16 +321,6 @@ export default function FilingsPage() {
     }
   };
 
-  const handleSort = (column: string) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(column);
-      setSortOrder("desc");
-    }
-    setPage(1);
-  };
-
   const hasActiveFilters =
     search ||
     startDate ||
