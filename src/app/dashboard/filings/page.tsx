@@ -16,6 +16,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Trash2,
+  Bookmark,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -132,6 +134,18 @@ interface FilingsResponse {
   };
 }
 
+interface SavedFilter {
+  id: string;
+  filterName: string;
+  minOffering: string | null;
+  maxOffering: string | null;
+  industryGroups: string[] | null;
+  states: string[] | null;
+  minRelevance: number | null;
+  isDefault: boolean;
+  createdAt: string;
+}
+
 const formatCurrency = (amount: number | null | undefined): string => {
   if (!amount) return "N/A";
   if (amount >= 1_000_000_000)
@@ -228,6 +242,13 @@ export default function FilingsPage() {
   // Save filter dialog state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [filterName, setFilterName] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Saved filters state
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
+  const [savedFiltersOpen, setSavedFiltersOpen] = useState(false);
+  const [deleteFilterId, setDeleteFilterId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Fetch filings
   const fetchFilings = useCallback(async () => {
@@ -288,6 +309,34 @@ export default function FilingsPage() {
     fetchFilings();
   }, [fetchFilings]);
 
+  // Fetch saved filters on mount
+  useEffect(() => {
+    const fetchSavedFilters = async () => {
+      try {
+        const response = await fetch("/api/edgar/filters");
+        if (response.ok) {
+          const data = await response.json();
+          setSavedFilters(data.filters || []);
+        }
+      } catch (error) {
+        console.error("Error fetching saved filters:", error);
+      }
+    };
+    fetchSavedFilters();
+  }, []);
+
+  // Close saved filters dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (savedFiltersOpen && !target.closest(".saved-filters-dropdown")) {
+        setSavedFiltersOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [savedFiltersOpen]);
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -335,11 +384,57 @@ export default function FilingsPage() {
 
       if (!response.ok) throw new Error("Failed to save filter");
 
+      // Refresh saved filters list
+      const listResponse = await fetch("/api/edgar/filters");
+      if (listResponse.ok) {
+        const data = await listResponse.json();
+        setSavedFilters(data.filters || []);
+      }
+
       setSaveDialogOpen(false);
       setFilterName("");
+      setSaveSuccess(true);
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       console.error("Error saving filter:", error);
     }
+  };
+
+  // Load a saved filter into the filter state
+  const handleLoadFilter = (filter: SavedFilter) => {
+    setMinOffering(filter.minOffering || "");
+    setMaxOffering(filter.maxOffering || "");
+    setSelectedIndustries(filter.industryGroups || []);
+    setSelectedStates(filter.states || []);
+    setMinRelevance(filter.minRelevance ? String(filter.minRelevance) : "");
+    setPage(1);
+    setSavedFiltersOpen(false);
+  };
+
+  // Delete a saved filter
+  const handleDeleteFilter = async () => {
+    if (!deleteFilterId) return;
+
+    try {
+      const response = await fetch(`/api/edgar/filters?id=${deleteFilterId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete filter");
+
+      // Refresh saved filters list
+      setSavedFilters(savedFilters.filter((f) => f.id !== deleteFilterId));
+      setDeleteDialogOpen(false);
+      setDeleteFilterId(null);
+    } catch (error) {
+      console.error("Error deleting filter:", error);
+    }
+  };
+
+  const openDeleteDialog = (filterId: string) => {
+    setDeleteFilterId(filterId);
+    setDeleteDialogOpen(true);
   };
 
   const handleExportCsv = async () => {
@@ -569,7 +664,45 @@ export default function FilingsPage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t flex-wrap">
+            {/* Saved Filters Dropdown */}
+            {savedFilters.length > 0 && (
+              <div className="relative saved-filters-dropdown">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSavedFiltersOpen(!savedFiltersOpen)}
+                  className="relative"
+                >
+                  <Bookmark className="h-4 w-4 mr-2" />
+                  Saved Filters
+                </Button>
+                {savedFiltersOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-md shadow-lg z-50">
+                    {savedFilters.map((filter) => (
+                      <div
+                        key={filter.id}
+                        className="flex items-center justify-between p-2 hover:bg-muted/50 border-b last:border-b-0"
+                      >
+                        <button
+                          onClick={() => handleLoadFilter(filter)}
+                          className="flex-1 text-left text-sm truncate hover:text-primary"
+                        >
+                          {filter.filterName}
+                        </button>
+                        <button
+                          onClick={() => openDeleteDialog(filter.id)}
+                          className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive"
+                          title="Delete filter"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <Button
               variant="outline"
               size="sm"
@@ -596,6 +729,12 @@ export default function FilingsPage() {
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
+            {/* Success feedback */}
+            {saveSuccess && (
+              <span className="text-sm text-green-600 dark:text-green-400 ml-2 animate-pulse">
+                Filter saved!
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -816,6 +955,26 @@ export default function FilingsPage() {
             </Button>
             <Button onClick={handleSaveFilter} disabled={!filterName.trim()}>
               Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Filter Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Filter</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this saved filter? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteFilter}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
