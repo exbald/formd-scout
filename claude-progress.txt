@@ -1614,3 +1614,38 @@ Date: 2026-02-17
 - Feature #31: PASSING ✅
 
 ### Current completion: 38/78 features passing (48.7%)
+
+## Session - Feature #27: Filings API supports sorting by multiple columns
+Date: 2026-02-17
+
+### What was verified:
+- Feature #27 "Filings API supports sorting by multiple columns" was already implemented
+- The GET /api/edgar/filings endpoint supports sortBy and sortOrder query params
+- sortColumnMap maps sortable columns to database columns:
+  - filingDate → formDFilings.filingDate
+  - companyName → formDFilings.companyName
+  - totalOffering → formDFilings.totalOffering
+  - industryGroup → formDFilings.industryGroup
+  - issuerState → formDFilings.issuerState
+  - relevanceScore → filingEnrichments.relevanceScore
+- orderBy clause uses Drizzle's asc()/desc() functions based on sortOrder param
+- Defaults: sortBy=filingDate, sortOrder=desc
+
+### Database sorting tests (all passed):
+1. ✅ Sort by filingDate DESC - verified dates in descending order
+2. ✅ Sort by totalOffering ASC - verified amounts in ascending order
+3. ✅ Sort by companyName ASC - verified alphabetical order
+
+### API endpoint tests:
+- All sort requests return 401 Unauthorized without auth (expected behavior)
+- API code verified: has sortBy, sortOrder, sortColumnMap, orderBy implementation
+
+### Verification:
+- Lint: 0 errors, 22 warnings (import order only)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #27: PASSING ✅
+
+### Current completion: 39/78 features passing (50.0%)
