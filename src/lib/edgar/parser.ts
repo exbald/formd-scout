@@ -109,9 +109,17 @@ function extractFederalExemptions(offeringData: unknown): string | null {
 
   for (const exemption of exemptionArray) {
     if (exemption && typeof exemption === "object") {
-      const item = (exemption as Record<string, unknown>).item;
-      if (typeof item === "string" && item.trim()) {
-        items.push(item.trim());
+      const itemValue = (exemption as Record<string, unknown>).item;
+
+      // Item can be a string, array of strings, or null
+      if (Array.isArray(itemValue)) {
+        for (const i of itemValue) {
+          if (typeof i === "string" && i.trim()) {
+            items.push(i.trim());
+          }
+        }
+      } else if (typeof itemValue === "string" && itemValue.trim()) {
+        items.push(itemValue.trim());
       }
     }
   }
@@ -162,9 +170,9 @@ export function parseFormDXml(
                        submissionType.toUpperCase() === "D/A";
 
     // Extract filing date - default to today if not found
-    const filingDateRaw = extractString(headerData, "filingDate") ??
-                       extractString(edgarSubmission, "headerData", "filingDate");
-    const filingDate: string = filingDateRaw ?? new Date().toISOString().split("T")[0];
+    const filingDate = extractString(headerData, "filingDate") ??
+                       extractString(edgarSubmission, "headerData", "filingDate") ??
+                       new Date().toISOString().slice(0, 10);
 
     // Extract primary issuer information
     const companyName = extractString(primaryIssuer, "entityName") ||

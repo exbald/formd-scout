@@ -188,3 +188,43 @@ Date: 2026-02-17
 - Feature #6: PASSING ✅
 
 ### Current completion: 6/78 features passing (including #1, #2, #3, #4, #5, #6)
+
+## Session 7 - Feature #15: SEC EDGAR fetcher retrieves Form D filings from EFTS endpoint
+Date: 2026-02-17
+
+### What was accomplished:
+- Fully implemented src/lib/edgar/fetcher.ts with all required functions:
+  - fetchRecentFormDFilings(startDate, endDate) - queries SEC EFTS endpoint
+  - fetchFilingIndex(cik, accessionNumber) - fetches filing document index
+  - fetchFormDXml(xmlUrl) - fetches raw XML content
+  - fetchCompanyInfo(cik) - fetches company submission data
+  - buildFormDXmlUrl() / buildFilingUrl() - URL builder utilities
+- Implemented rate limiting (150ms delay between requests)
+- Implemented retry logic (3 retries with exponential backoff starting at 1000ms)
+- Updated src/lib/edgar/types.ts to match actual SEC EFTS API response structure
+- Added extractFilingInfo() helper to parse EFTS hit data
+
+### Technical details:
+- SEC_HEADERS: User-Agent "NOCODE-GDN-LLC contact@nocodegdn.com", Accept "application/json"
+- RATE_LIMIT_DELAY_MS: 150ms (enforced between all SEC requests)
+- MAX_RETRIES: 3 with exponential backoff (1000ms * 2^retryCount)
+- Fixed EFTS query: removed `q=*` parameter which was causing zero results
+- EFTS response uses `display_names` (array) not `entity_name`, and `_id` format is "accession_number:filename"
+
+### Verification:
+- Test script (scripts/test-fetcher-final.ts) verified all requirements:
+  1. ✅ User-Agent header matches spec exactly
+  2. ✅ Accept header is "application/json"
+  3. ✅ API returns hits array with filing objects (100 filings in Q4 2024)
+  4. ✅ Each hit includes cik, display_names, file_date, form, _id (accession number)
+  5. ✅ Rate limiting verified (249ms+ between requests, >=150ms required)
+  6. ✅ Retry logic implemented with exponential backoff
+- Lint: 0 errors, 2 warnings (pre-existing in backfill.ts)
+- TypeScript: passes cleanly
+- Build: `npx next build` succeeds
+- No mock data patterns in codebase
+
+### Feature status:
+- Feature #15: PASSING ✅
+
+### Current completion: 7/78 features passing (including #1, #2, #3, #4, #5, #6, #15)
