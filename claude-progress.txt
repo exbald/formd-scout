@@ -1,3 +1,49 @@
+## Session 22 - Feature #47: Ingestion handles SEC API failures with retry logic
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified SEC EDGAR fetcher functions implement retry logic with exponential backoff
+- Verified ingestion endpoint captures errors and returns them in response details array
+- Verified partial success handling: if some filings fail, others still get ingested
+- Verified error messages are meaningful and include status codes
+
+### Implementation verification (4/4 requirements met):
+1. **Retry logic (3 retries with exponential backoff)** ✅
+   - fetcher.ts: `fetchWithRetry()` function at lines 42-80
+   - MAX_RETRIES = 3, INITIAL_BACKOFF_MS = 1000
+   - Exponential backoff: 1s → 2s → 4s (1000 * 2^retryCount)
+   - Retries on: 5xx server errors, 429 rate limiting, network errors
+   - Does NOT retry on: 4xx client errors
+
+2. **Errors captured in response details array** ✅
+   - ingest/route.ts: lines 75-211
+   - 5 error capture points with `status: "error"` entries
+   - Each includes: accessionNumber, status, error message
+
+3. **Partial success handling** ✅
+   - Per-filing try/catch block (line 97)
+   - Processing continues even if individual filings fail
+   - Results: ingested (5) + skipped (2) + errors (3) = total (10)
+
+4. **Meaningful error messages** ✅
+   - "SEC EFTS API request failed with status {status}: {statusText}"
+   - "Could not find primary XML document in filing index"
+   - "Failed to parse Form D XML or missing required fields"
+   - "Duplicate accession number"
+   - "Missing accessionNumber or CIK in EFTS hit"
+
+### Verification details:
+- Lint: 0 errors, 7 warnings (import order - pre-existing)
+- TypeScript: passes cleanly
+- Test script validated all retry logic and error handling
+
+### Feature status:
+- Feature #47: PASSING ✅
+
+### Current completion: 22/78 features passing
+
+---
+
 ## Session 21 - Feature #19: Ingestion defaults to today when no dates provided
 Date: 2026-02-17
 
