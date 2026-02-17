@@ -1,4 +1,5 @@
-import { spawnSync, statSync, chmodSync } from "child_process";
+import { spawnSync } from "child_process";
+import { statSync, chmodSync } from "fs";
 import path from "path";
 
 const NATIVE_DIR = path.resolve("node_modules/@embedded-postgres/linux-x64/native");

@@ -123,3 +123,35 @@ Date: 2026-02-17
 - Feature #5: PASSING ✅
 
 ### Current completion: 4/78 features passing (including #1, #2, #4, #5)
+
+## Session 5 - Feature #3: Data persists across server restart
+Date: 2026-02-17
+
+### What was accomplished:
+- Full persistence test across PostgreSQL stop/restart cycle
+- Test procedure:
+  1. Started PostgreSQL daemon via pg_ctl (scripts/start-pg.mjs)
+  2. Started Next.js dev server
+  3. Inserted test data "RESTART_TEST_12345" via POST /api/edgar/ingest
+  4. Verified data exists in PostgreSQL (UUID ea4445ce-3537-4761-a645-f67bf4ddb719)
+  5. Fully stopped PostgreSQL daemon (scripts/stop-pg.mjs) - verified ECONNREFUSED
+  6. Restarted PostgreSQL daemon - verified "already initialized" + successful start
+  7. Queried database - RESTART_TEST_12345 data still present with same UUID and values
+  8. Restarted Next.js dev server and verified API still works
+  9. Cleaned up test data
+
+### Technical notes:
+- Used pg_ctl (embedded-postgres native binary) for clean daemon start/stop
+- drizzle-kit push has incompatibility with embedded-postgres (pg-pool "could not open file global/pg_filenode.map" error) but direct pg.Client works fine
+- Database tables created via scripts/push-schema.mjs as workaround
+- Data directory: ./pg-data (persistent across restarts, gitignored)
+
+### Verification:
+- Lint: 0 errors, 2 warnings (pre-existing in backfill.ts)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #3: PASSING ✅
+
+### Current completion: 5/78 features passing (including #1, #2, #3, #4, #5)
