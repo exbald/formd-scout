@@ -1,3 +1,61 @@
+## Session 15 - Feature #17: Ingestion endpoint fetches parses and stores Form D filings
+Date: 2026-02-17
+
+### What was accomplished:
+- Completely rewrote POST /api/edgar/ingest endpoint to fetch from SEC EDGAR EFTS API
+- The endpoint now:
+  1. Accepts optional startDate/endDate parameters (defaults to today)
+  2. Fetches Form D filings from SEC EFTS endpoint via fetchRecentFormDFilings()
+  3. For each filing: fetches index, gets XML URL, fetches XML, parses, inserts into PostgreSQL
+  4. Handles deduplication via accessionNumber unique constraint (onConflictDoNothing)
+- Fixed XML parser to handle both nested (formData.primaryIssuer) and flat (edgarSubmission.primaryIssuer) structures
+- Added support for jurisdictionOfInc field (newer XML format) in addition to stateOfIncorporation
+
+### Response format (verified):
+```json
+{
+  "ingested": 10,      // number of filings successfully inserted
+  "skipped": 0,        // number of duplicates
+  "errors": 2,         // number of processing failures
+  "details": [         // per-filing results
+    { "accessionNumber": "...", "status": "ingested" },
+    { "accessionNumber": "...", "status": "error", "error": "..." }
+  ]
+}
+```
+
+### Verification steps completed:
+1. ✅ POST /api/edgar/ingest with valid x-api-key returns {ingested, skipped, errors, details}
+2. ✅ ingested count is >= 0 (verified with 135 filings ingested)
+3. ✅ GET /api/edgar/filings confirms filings in database with correct fields
+4. ✅ companyName, cik, accessionNumber, filingDate all present and valid
+5. ✅ accessionNumbers stored with dashes as-is from EDGAR (e.g., "0002111518-26-000001")
+
+### Technical details:
+- Parser handles two XML structures:
+  - Nested: edgarSubmission > formData > primaryIssuer/offeringData
+  - Flat: edgarSubmission > primaryIssuer/offeringData (actual SEC format)
+- Rate limiting enforced (150ms delay between SEC requests)
+- Retry logic with exponential backoff (3 retries on 429/5xx errors)
+- Uses extractFilingInfo() from types.ts to parse EFTS hit data
+
+### Files modified:
+- src/app/api/edgar/ingest/route.ts - Complete rewrite for SEC EDGAR integration
+- src/lib/edgar/parser.ts - Fixed to handle flat XML structure, added jurisdictionOfInc support
+
+### Verification:
+- Lint: 0 errors, 5 warnings (pre-existing import order + console.log in backfill.ts)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase
+- 135 filings successfully ingested into PostgreSQL
+
+### Feature status:
+- Feature #17: PASSING ✅
+
+### Current completion: 15/78 features passing
+
+---
+
 ## Session 14 - Feature #11: Ingestion API requires valid x-api-key header
 Date: 2026-02-17
 
