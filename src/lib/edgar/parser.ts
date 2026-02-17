@@ -141,6 +141,11 @@ export function parseFormDXml(
   cik: string
 ): ParsedFormDFiling | null {
   try {
+    // Handle empty or whitespace-only input
+    if (!xmlString || xmlString.trim().length === 0) {
+      return null;
+    }
+
     // Configure parser with options for Form D XML
     const parser = new XMLParser({
       ignoreAttributes: true,
@@ -155,12 +160,30 @@ export function parseFormDXml(
 
     const parsed = parser.parse(xmlString);
 
+    // Validate that we got a meaningful parsed result
+    if (!parsed || typeof parsed !== "object" || Object.keys(parsed).length === 0) {
+      return null;
+    }
+
     // Navigate to the main sections
     const edgarSubmission = navigatePath(parsed, "edgarSubmission") || parsed;
     const headerData = navigatePath(edgarSubmission, "headerData");
     const formData = navigatePath(edgarSubmission, "formData");
     const primaryIssuer = navigatePath(formData, "primaryIssuer");
     const offeringData = navigatePath(formData, "offeringData");
+
+    // Validate that we have the minimum required structure
+    // Must have either headerData+formData OR be a valid edgarSubmission structure
+    if (!edgarSubmission || typeof edgarSubmission !== "object") {
+      return null;
+    }
+
+    // Check that we have at least one recognizable Form D element
+    const hasHeaderData = headerData && typeof headerData === "object";
+    const hasFormData = formData && typeof formData === "object";
+    if (!hasHeaderData && !hasFormData) {
+      return null;
+    }
 
     // Extract submission type to determine if amendment
     const submissionType = extractString(headerData, "submissionType") ||

@@ -19,7 +19,7 @@ export async function requireAuth() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
-    redirect("/");
+    redirect("/login");
   }
 
   return session;
