@@ -161,8 +161,17 @@ async function enrichSingleFiling(
       firstSaleDate: filing.firstSaleDate,
     };
 
-    // Call AI enrichment
-    const enrichment = await enrichFiling(enrichmentInput);
+    // Call AI enrichment - returns result object, never throws
+    const enrichmentResult = await enrichFiling(enrichmentInput);
+
+    if (!enrichmentResult.success || !enrichmentResult.data) {
+      return {
+        success: false,
+        error: enrichmentResult.error ?? "Unknown enrichment error",
+      };
+    }
+
+    const enrichment = enrichmentResult.data;
 
     // Store the enrichment
     await db.insert(filingEnrichments).values({
@@ -178,6 +187,7 @@ async function enrichSingleFiling(
 
     return { success: true };
   } catch (error) {
+    // Catch any database errors (not enrichment errors - those return result objects)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

@@ -96,21 +96,36 @@ function buildEnrichmentPrompt(filing: EnrichmentInput): string {
 }
 
 /**
+ * Result type for enrichment operations.
+ * Returns either success with data, or failure with error message.
+ * This pattern ensures errors are reported rather than thrown,
+ * allowing batch operations to continue processing other filings.
+ */
+export interface EnrichmentResult {
+  success: boolean;
+  data?: FilingEnrichment;
+  error?: string;
+}
+
+/**
  * Enrich a filing with AI-generated analysis using Vercel AI SDK + OpenRouter.
  *
  * Generates structured output including company summary, relevance score,
  * reasoning, estimated headcount, growth signals, and competitors.
  *
- * Retries once on failure (API error or invalid response).
+ * Retries once on failure (API error, invalid JSON, or schema validation error).
+ * Returns a result object instead of throwing to allow batch operations to
+ * continue processing when individual filings fail.
  */
 export async function enrichFiling(
   filing: EnrichmentInput
-): Promise<FilingEnrichment> {
+): Promise<EnrichmentResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    throw new Error(
-      "OPENROUTER_API_KEY environment variable is not configured"
-    );
+    return {
+      success: false,
+      error: "OPENROUTER_API_KEY environment variable is not configured",
+    };
   }
 
   const openrouter = createOpenRouter({ apiKey });
@@ -119,7 +134,7 @@ export async function enrichFiling(
   );
   const prompt = buildEnrichmentPrompt(filing);
 
-  let lastError: unknown;
+  let lastError: string = "Unknown error";
 
   // Attempt up to 2 times (initial + 1 retry)
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -141,20 +156,35 @@ export async function enrichFiling(
         competitors: result.object.competitors,
       };
 
-      return enrichment;
+      return { success: true, data: enrichment };
     } catch (error) {
-      lastError = error;
-      // Only retry once
+      // Capture error message for reporting
+      if (error instanceof Error) {
+        lastError = error.message;
+        // Check for JSON parse errors specifically
+        if (
+          error.message.includes("JSON") ||
+          error.message.includes("parse") ||
+          error.message.includes("schema")
+        ) {
+          lastError = `Invalid response from AI model: ${error.message}`;
+        }
+      } else {
+        lastError = String(error);
+      }
+
+      // Only retry once - add brief delay before retry
       if (attempt === 0) {
-        // Brief delay before retry
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
   }
 
-  throw new Error(
-    `Failed to enrich filing after 2 attempts: ${lastError instanceof Error ? lastError.message : String(lastError)}`
-  );
+  // Return error instead of throwing - allows batch to continue
+  return {
+    success: false,
+    error: `Failed to enrich filing after 2 attempts: ${lastError}`,
+  };
 }
 
 /**
