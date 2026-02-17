@@ -10,6 +10,7 @@
  * - Handles "Yet to Occur" for firstSaleDate
  * - Parses offering amounts as numbers (removes commas, $ signs)
  * - Detects amendment filings (D/A form type)
+ * - Handles both nested (formData.primaryIssuer) and flat (edgarSubmission.primaryIssuer) XML structures
  * - Pure function with no side effects
  */
 
@@ -169,19 +170,21 @@ export function parseFormDXml(
     const edgarSubmission = navigatePath(parsed, "edgarSubmission") || parsed;
     const headerData = navigatePath(edgarSubmission, "headerData");
     const formData = navigatePath(edgarSubmission, "formData");
-    const primaryIssuer = navigatePath(formData, "primaryIssuer");
-    const offeringData = navigatePath(formData, "offeringData");
+
+    // Handle both nested (formData.primaryIssuer) and flat (edgarSubmission.primaryIssuer) structures
+    // Some SEC filings have formData wrapper, others have fields directly under edgarSubmission
+    const primaryIssuer = navigatePath(formData, "primaryIssuer") ||
+                          navigatePath(edgarSubmission, "primaryIssuer");
+    const offeringData = navigatePath(formData, "offeringData") ||
+                         navigatePath(edgarSubmission, "offeringData");
 
     // Validate that we have the minimum required structure
-    // Must have either headerData+formData OR be a valid edgarSubmission structure
     if (!edgarSubmission || typeof edgarSubmission !== "object") {
       return null;
     }
 
-    // Check that we have at least one recognizable Form D element
-    const hasHeaderData = headerData && typeof headerData === "object";
-    const hasFormData = formData && typeof formData === "object";
-    if (!hasHeaderData && !hasFormData) {
+    // Check that we have at least primaryIssuer - this is essential
+    if (!primaryIssuer || typeof primaryIssuer !== "object") {
       return null;
     }
 
@@ -192,9 +195,10 @@ export function parseFormDXml(
     const isAmendment = submissionType.toUpperCase().includes("D/A") ||
                        submissionType.toUpperCase() === "D/A";
 
-    // Extract filing date - default to today if not found
+    // Extract filing date - try multiple locations, then use EFTS filingDate if available
     const filingDate = extractString(headerData, "filingDate") ??
                        extractString(edgarSubmission, "headerData", "filingDate") ??
+                       extractString(edgarSubmission, "filingDate") ??
                        new Date().toISOString().slice(0, 10);
 
     // Extract primary issuer information
@@ -202,7 +206,9 @@ export function parseFormDXml(
                        extractString(primaryIssuer, "issuerName") ||
                        "";
     const entityType = extractString(primaryIssuer, "entityType");
-    const stateOfInc = extractString(primaryIssuer, "stateOfIncorporation") ||
+    // Try jurisdictionOfInc first (newer format), then fallback to stateOfIncorporation
+    const stateOfInc = extractString(primaryIssuer, "jurisdictionOfInc") ||
+                       extractString(primaryIssuer, "stateOfIncorporation") ||
                        extractString(primaryIssuer, "stateOfInc");
     const sicCode = extractString(primaryIssuer, "sic") ||
                     extractString(primaryIssuer, "sicCode");

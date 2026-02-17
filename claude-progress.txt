@@ -1,3 +1,47 @@
+## Session 12 - Feature #12: Enrichment API requires valid x-api-key header
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified POST /api/edgar/enrich endpoint has API key protection implemented
+- The endpoint validates x-api-key header against INGEST_API_KEY environment variable
+- Returns 401 Unauthorized when:
+  - No x-api-key header is provided
+  - Incorrect API key value is provided
+  - INGEST_API_KEY env var is not configured
+- Returns 200 when correct API key is provided
+- Created scripts/test-api-key-auth.ts to validate the authentication logic
+
+### Implementation details (src/app/api/edgar/enrich/route.ts):
+```typescript
+const apiKey = request.headers.get("x-api-key");
+const expectedApiKey = process.env.INGEST_API_KEY;
+
+if (!expectedApiKey || apiKey !== expectedApiKey) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+### Test cases verified (5/5 passed):
+1. ✅ No x-api-key header → 401 Unauthorized
+2. ✅ Incorrect x-api-key value → 401 Unauthorized
+3. ✅ Correct x-api-key value → 200 (request accepted)
+4. ✅ Empty string key when INGEST_API_KEY undefined → 401
+5. ✅ Valid key but INGEST_API_KEY undefined → 401 (server misconfig protection)
+
+### Verification:
+- Lint: 0 errors, pre-existing warnings only
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds
+- No mock data patterns in codebase (grep check clean)
+- INGEST_API_KEY configured in .env: formd-scout-dev-api-key-2026
+
+### Feature status:
+- Feature #12: PASSING ✅
+
+### Current completion: 12/78 features passing
+
+---
+
 ## Session 9 - Feature #8: Landing page redirects authenticated users to dashboard
 Date: 2026-02-17
 
