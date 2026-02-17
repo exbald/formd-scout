@@ -1,3 +1,52 @@
+## Session 14 - Feature #11: Ingestion API requires valid x-api-key header
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified POST /api/edgar/ingest endpoint has API key protection implemented
+- The endpoint validates x-api-key header against INGEST_API_KEY environment variable
+- Returns 401 Unauthorized when:
+  - No x-api-key header is provided
+  - Incorrect API key value is provided
+  - INGEST_API_KEY env var is not configured
+- Returns 200 (request accepted) when correct API key is provided
+- Created scripts/test-feature11.ts to validate the authentication logic via unit tests
+
+### Implementation details (src/app/api/edgar/ingest/route.ts):
+```typescript
+const apiKey = req.headers.get("x-api-key");
+const expectedKey = process.env.INGEST_API_KEY;
+
+if (!expectedKey || apiKey !== expectedKey) {
+  return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+}
+```
+
+### Test cases verified (6/6 passed):
+1. ✅ No x-api-key header → 401 Unauthorized
+2. ✅ Empty x-api-key header → 401 Unauthorized
+3. ✅ Incorrect x-api-key value ("bad-key") → 401 Unauthorized
+4. ✅ Incorrect API key with similar format → 401 Unauthorized
+5. ✅ Correct x-api-key value → 200 (security check passes, request accepted)
+6. ✅ Valid key but INGEST_API_KEY undefined → 401 (server misconfig protection)
+
+### HTTP endpoint verification:
+- curl without header: HTTP 401 {"error":"Unauthorized"}
+- curl with wrong header: HTTP 401 {"error":"Unauthorized"}
+- curl with correct header: Request accepted (proceeds to SEC EDGAR fetch)
+
+### Verification:
+- Lint: 0 errors, 5 warnings (pre-existing import order + console.log in backfill.ts)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+- INGEST_API_KEY configured in .env: formd-scout-dev-api-key-2026
+
+### Feature status:
+- Feature #11: PASSING ✅
+
+### Current completion: 14/78 features passing
+
+---
+
 ## Session 13 - Feature #13: Filings API requires authentication
 Date: 2026-02-17
 
