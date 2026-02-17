@@ -14,7 +14,7 @@ The enrichment feature requires the OpenRouter API to generate AI analysis. This
 ### Feature status:
 - Feature #21: SKIPPED (moved to priority 80, awaiting OPENROUTER_API_KEY)
 
-### Current completion: 20/78 features passing
+### Current completion: 24/78 features passing
 
 ---
 
