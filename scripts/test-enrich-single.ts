@@ -17,7 +17,7 @@ import { config } from "dotenv";
 config({ path: ".env" });
 
 const INGEST_API_KEY = "formd-scout-dev-api-key-2026";
-const BASE_URL = "http://localhost:3006";
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 async function testSingleFilingEnrichment(): Promise<void> {
   // Dynamic import after env is loaded

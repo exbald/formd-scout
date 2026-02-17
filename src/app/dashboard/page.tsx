@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -8,8 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Calendar, TrendingUp, DollarSign } from "lucide-react";
+import { FileText, Calendar, TrendingUp, DollarSign, ExternalLink } from "lucide-react";
 import { formatDollarAmount } from "@/lib/format-currency";
 import {
   BarChart,
@@ -41,8 +43,18 @@ interface StatsData {
   dailyCounts: Array<{ date: string; count: number }>;
 }
 
+interface HighRelevanceFiling {
+  id: string;
+  companyName: string;
+  filingDate: string;
+  totalOffering: number | null;
+  relevanceScore: number | null;
+}
+
 export default function DashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<StatsData | null>(null);
+  const [highRelevanceFilings, setHighRelevanceFilings] = useState<HighRelevanceFiling[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +76,42 @@ export default function DashboardPage() {
 
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    async function fetchHighRelevanceFilings() {
+      try {
+        // Fetch top 10 filings with relevance score >= 60
+        const response = await fetch(
+          "/api/edgar/filings?minRelevance=60&sortBy=relevanceScore&sortOrder=desc&limit=10"
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setHighRelevanceFilings(data.filings || []);
+        }
+      } catch (err) {
+        console.error("Error fetching high-relevance filings:", err);
+      }
+    }
+
+    fetchHighRelevanceFilings();
+  }, []);
+
+  // Get relevance badge styling
+  const getRelevanceBadgeVariant = (
+    score: number | null
+  ): "default" | "secondary" | "outline" => {
+    if (score === null) return "outline";
+    if (score >= 70) return "default";
+    if (score >= 40) return "secondary";
+    return "outline";
+  };
+
+  const getRelevanceColor = (score: number | null): string => {
+    if (score === null) return "text-muted-foreground";
+    if (score >= 70) return "text-green-600 dark:text-green-400";
+    if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
+    return "text-gray-500";
+  };
 
   return (
     <div className="container mx-auto p-6">
@@ -277,6 +325,82 @@ export default function DashboardPage() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent High-Relevance Filings Table */}
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent High-Relevance Filings</CardTitle>
+            <CardDescription>
+              Top 10 filings with relevance score of 60 or higher
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-6">
+                <Skeleton className="h-[200px] w-full" />
+              </div>
+            ) : highRelevanceFilings.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No high-relevance filings found. Filings with AI enrichment scores of 60+
+                will appear here.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4 font-medium">Company Name</th>
+                      <th className="text-left p-4 font-medium">Filing Date</th>
+                      <th className="text-left p-4 font-medium">Offering Amount</th>
+                      <th className="text-left p-4 font-medium">Relevance</th>
+                      <th className="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {highRelevanceFilings.map((filing) => (
+                      <tr
+                        key={filing.id}
+                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() =>
+                          router.push(`/dashboard/filings/${filing.id}`)
+                        }
+                      >
+                        <td className="p-4">
+                          <span className="font-medium">{filing.companyName}</span>
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {filing.filingDate}
+                        </td>
+                        <td className="p-4">
+                          {filing.totalOffering !== null
+                            ? formatDollarAmount(filing.totalOffering)
+                            : "N/A"}
+                        </td>
+                        <td className="p-4">
+                          {filing.relevanceScore !== null ? (
+                            <Badge
+                              variant={getRelevanceBadgeVariant(filing.relevanceScore)}
+                              className={getRelevanceColor(filing.relevanceScore)}
+                            >
+                              {filing.relevanceScore}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </CardContent>
