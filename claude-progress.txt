@@ -1,3 +1,46 @@
+## Session 29 - Feature #29: Dashboard stats API returns aggregated statistics
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified GET /api/edgar/stats endpoint returns all required aggregated statistics
+- All database queries execute correctly via Drizzle ORM
+- API properly protected by authentication (returns 401 without session)
+
+### Stats API response fields verified (10/10):
+1. ✅ `today.count` - number (filings filed today)
+2. ✅ `today.totalAmount` - string (sum of offering amounts)
+3. ✅ `thisWeek.count` - number (filings this week)
+4. ✅ `thisWeek.totalAmount` - string
+5. ✅ `thisMonth.count` - number (filings this month)
+6. ✅ `thisMonth.totalAmount` - string
+7. ✅ `highRelevanceCount` - number >= 0 (enrichments with score >= 60)
+8. ✅ `averageOffering` - string (numeric, parseable to number)
+9. ✅ `topIndustries` - array with industry names and counts
+10. ✅ `topStates` - array with state codes and counts
+
+### Implementation details (src/app/api/edgar/stats/route.ts):
+- Date boundaries: today, week start (Monday), month start
+- Parallel queries via Promise.all() for performance
+- Real PostgreSQL aggregation: count(*), sum(), avg()
+- LEFT JOIN with filing_enrichments for relevance scoring
+- Group by with ORDER BY and LIMIT for top 5 results
+
+### Verification:
+- Database: 186 filings exist (all dated 2026-02-17)
+- Top states: NY(24), CA(21), TX(17), FL(12), GA(12)
+- Average offering: $41,016,998
+- Lint: 0 errors, 19 warnings (import order only)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+- Dev server running on port 3006
+
+### Feature status:
+- Feature #29: PASSING ✅
+
+### Current completion: 24/78 features passing
+
+---
+
 ## Session 28 - Feature #65: Loading states shown during data fetching on all pages
 Date: 2026-02-17
 
