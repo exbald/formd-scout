@@ -1353,3 +1353,5 @@ Date: 2026-02-17
 - Feature #30: PASSING ✅
 
 ### Current completion: 35/78 features passing (44.9%)
+
+**Note:** Stats show 34/78 but Feature #30 is confirmed passing in database.
