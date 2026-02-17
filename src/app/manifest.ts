@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Agentic Coding Boilerplate",
-    short_name: "Agentic",
+    name: "FormD Scout",
+    short_name: "FormD Scout",
     description:
-      "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
+      "Detect funding rounds before the press release. Monitor SEC EDGAR Form D filings.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

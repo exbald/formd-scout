@@ -18,36 +18,33 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Agentic Coding Boilerplate",
-    template: "%s | Agentic Coding Boilerplate",
+    default: "FormD Scout",
+    template: "%s | FormD Scout",
   },
   description:
-    "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling - perfect for building AI-powered applications and autonomous agents by Leon van Zyl",
+    "Detect funding rounds before the press release. Monitor SEC EDGAR Form D filings to identify companies that have recently raised private funding.",
   keywords: [
-    "Next.js",
-    "React",
-    "TypeScript",
-    "AI",
-    "OpenRouter",
-    "Boilerplate",
-    "Authentication",
-    "PostgreSQL",
+    "SEC EDGAR",
+    "Form D",
+    "Funding Rounds",
+    "Private Placements",
+    "Commercial Real Estate",
+    "CRE Intelligence",
+    "SEC Filings",
   ],
-  authors: [{ name: "Leon van Zyl" }],
-  creator: "Leon van Zyl",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Agentic Coding Boilerplate",
-    title: "Agentic Coding Boilerplate",
+    siteName: "FormD Scout",
+    title: "FormD Scout",
     description:
-      "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
+      "Detect funding rounds before the press release. Monitor SEC EDGAR Form D filings to identify companies raising private funding.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agentic Coding Boilerplate",
+    title: "FormD Scout",
     description:
-      "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
+      "Detect funding rounds before the press release. Monitor SEC EDGAR Form D filings.",
   },
   robots: {
     index: true,
@@ -59,20 +56,11 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Agentic Coding Boilerplate",
+  name: "FormD Scout",
   description:
-    "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
-  applicationCategory: "DeveloperApplication",
+    "Detect funding rounds before the press release. Monitor SEC EDGAR Form D filings to identify companies raising private funding.",
+  applicationCategory: "BusinessApplication",
   operatingSystem: "Any",
-  offers: {
-    "@type": "Offer",
-    price: "0",
-    priceCurrency: "USD",
-  },
-  author: {
-    "@type": "Person",
-    name: "Leon van Zyl",
-  },
 };
 
 export default function RootLayout({
