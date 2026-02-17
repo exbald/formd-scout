@@ -1,3 +1,29 @@
+## Session 9 - Feature #8: Landing page redirects authenticated users to dashboard
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified landing page (src/app/page.tsx) has correct redirect implementation
+- Implementation uses:
+  - `useSession()` hook from better-auth/react via auth-client
+  - `useEffect` to trigger redirect when session exists and `isPending` is false
+  - `router.replace("/dashboard")` for client-side navigation (replaces history, not pushes)
+- The redirect happens automatically on client-side when authenticated user visits `/`
+- Unauthenticated users see the landing page with FormD Scout branding
+
+### Verification details:
+- Code review confirms correct implementation pattern
+- Build: `npm run build:ci` succeeds with exit code 0
+- Lint: 0 errors, pre-existing warnings only
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #8: PASSING ✅
+
+### Current completion: 12/78 features passing
+
+---
+
 ## Session 8 - Feature #10: Unauthenticated users cannot access dashboard routes
 Date: 2026-02-17
 
