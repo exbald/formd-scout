@@ -16,15 +16,15 @@
 import { config } from "dotenv";
 config({ path: ".env" });
 
-// Now import modules that depend on env vars
-import { db } from "../src/lib/db";
-import { formDFilings, filingEnrichments } from "../src/lib/schema";
-import { eq } from "drizzle-orm";
-
 const INGEST_API_KEY = "formd-scout-dev-api-key-2026";
 const BASE_URL = "http://localhost:3006";
 
 async function testSingleFilingEnrichment(): Promise<void> {
+  // Dynamic import after env is loaded
+  const { db } = await import("../src/lib/db");
+  const { formDFilings, filingEnrichments } = await import("../src/lib/schema");
+  const { eq } = await import("drizzle-orm");
+
   console.log("=== Single Filing Enrichment API Test ===\n");
 
   // Test 1: Verify enrichment API rejects missing API key
