@@ -11,6 +11,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Calendar, TrendingUp, DollarSign } from "lucide-react";
 import { formatDollarAmount } from "@/lib/format-currency";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface StatsData {
   today: {
@@ -156,7 +165,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Placeholder for future sections */}
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -167,10 +176,52 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-[200px] w-full" />
+              <Skeleton className="h-[250px] w-full" />
             ) : (
-              <div className="text-muted-foreground text-center py-8">
-                Chart placeholder - {stats?.dailyCounts?.length ?? 0} days of data available
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={stats?.dailyCounts ?? []}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={(value) => {
+                        const d = new Date(value);
+                        return `${d.getMonth() + 1}/${d.getDate()}`;
+                      }}
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <Tooltip
+                      labelFormatter={(label) => {
+                        const d = new Date(label);
+                        return d.toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        });
+                      }}
+                      formatter={(value) => [value ?? 0, "Filings"]}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        borderColor: "hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
@@ -185,10 +236,47 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <Skeleton className="h-[200px] w-full" />
+              <Skeleton className="h-[250px] w-full" />
             ) : (
-              <div className="text-muted-foreground text-center py-8">
-                Chart placeholder - {stats?.topIndustries?.length ?? 0} industries
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={stats?.topIndustries ?? []}
+                    layout="vertical"
+                    margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      tick={{ fontSize: 12 }}
+                      className="text-muted-foreground"
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="industry"
+                      tick={{ fontSize: 11 }}
+                      className="text-muted-foreground"
+                      width={120}
+                      tickFormatter={(value) =>
+                        value && value.length > 15 ? `${value.slice(0, 15)}...` : value
+                      }
+                    />
+                    <Tooltip
+                      formatter={(value) => [value ?? 0, "Filings"]}
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--card))",
+                        borderColor: "hsl(var(--border))",
+                        borderRadius: "8px",
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="hsl(var(--primary))"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
