@@ -1,3 +1,28 @@
+## Session 19 - Feature #14: Stats and export APIs require authentication
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified /api/edgar/stats endpoint requires authentication (returns 401 Unauthorized without session)
+- Created /api/edgar/export endpoint for CSV export of filings
+- Export endpoint supports same filter params as filings endpoint (date range, offering range, industry, state, relevance, etc.)
+- Export endpoint requires authentication (returns 401 Unauthorized without session)
+- Created test script (scripts/test-auth.js) to verify API authentication
+
+### Verification details:
+- GET /api/edgar/stats (no auth): 401 ✅
+- GET /api/edgar/export (no auth): 401 ✅
+- GET /api/health (public): 200 ✅
+- Lint: 0 errors, 7 warnings (import order - pre-existing)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #14: PASSING ✅
+
+### Current completion: 20/78 features passing
+
+---
+
 ## Session 18 - Feature #21: Enrichment API enriches a single filing by filingId
 Date: 2026-02-17
 
