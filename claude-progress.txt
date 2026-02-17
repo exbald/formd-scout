@@ -95,3 +95,31 @@ Date: 2026-02-17
 - POSTGRES_URL in .env: postgresql://dev_user:dev_password@localhost:5432/postgres_dev
 
 ### Current completion: 3/78 features passing (including #1, #2, #4)
+
+## Session 4 - Feature #5: Backend API queries real database
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified GET /api/edgar/filings and GET /api/edgar/stats execute real PostgreSQL queries via Drizzle ORM
+- Both endpoints were already implemented (from Feature #1 session) with proper Drizzle ORM queries
+- Filings endpoint: SELECT with LEFT JOIN on form_d_filings + filing_enrichments, supports pagination, filtering, sorting
+- Stats endpoint: Aggregate queries (count, sum, avg, group by) across form_d_filings and filing_enrichments
+- Created scripts/test-db-queries.ts to verify DB queries independently of auth
+- All 3 verification tests passed:
+  1. Filings query returned real data from PostgreSQL (1 row - "Restart Test Corp")
+  2. Stats aggregate queries all executed successfully against real PostgreSQL
+  3. SQL generation confirmed: `select count(*)::int from "form_d_filings"` - real SQL, not mocks
+
+### Verification details:
+- Auth check: Both endpoints return 401 Unauthorized without auth session (correct)
+- Database: Real PostgreSQL running on port 5432 via embedded-postgres
+- Schema: All tables pushed via drizzle-kit push (no changes needed)
+- Drizzle ORM generates real SELECT/JOIN/WHERE/GROUP BY SQL queries
+- No mock data patterns (grep check clean)
+- Lint: 0 errors, 0 warnings
+- TypeScript: passes cleanly
+
+### Feature status:
+- Feature #5: PASSING ✅
+
+### Current completion: 4/78 features passing (including #1, #2, #4, #5)
