@@ -1,3 +1,32 @@
+## Session 37 - Feature #41: CSV export downloads file with filtered data
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified export API at /api/edgar/export is fully implemented with all filter support
+- Added Export CSV button to filings page (next to Save Filter button)
+- Button triggers file download with current filters applied
+- Download filename includes current date: `form-d-filings-{date}.csv`
+- All filters are passed to the export API: search, date range, offering range, industries, states, relevance, amendment, yetToOccur
+
+### Implementation details:
+- handleExportCsv() function (lines 440-473): Fetches from /api/edgar/export with filter params, creates blob download
+- Export CSV button (lines 724-731): Uses Download icon from lucide-react
+- Export API has proper CSV headers and Content-Disposition attachment header
+- CSV includes 22 columns: Company Name, CIK, Filing Date, Amendment, Total Offering, Amount Sold, Amount Remaining, Investors, Min Investment, Revenue Range, Industry, Entity Type, State of Inc, City, State, ZIP, Phone, SEC Filing URL, First Sale Date, Yet To Occur, Relevance Score, Company Summary
+
+### Verification:
+- Lint: 0 errors, 20 warnings (pre-existing import order)
+- TypeScript: passes cleanly (rebuilt tsconfig.tsbuildinfo)
+- Build: `npm run build:ci` succeeds with exit code 0
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #41: PASSING ✅
+
+### Current completion: 35/78 features passing (Feature #41 added)
+
+---
+
 ## Session 36 - Feature #34: Filings table displays sortable columns with color-coded relevance
 Date: 2026-02-17
 
