@@ -1,3 +1,56 @@
+## Session 39 - Feature #21: Enrichment API enriches a single filing by filingId
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified enrichment API at /api/edgar/enrich is fully implemented for single filing enrichment
+- Created verification scripts (scripts/verify-enrich-api.ts, scripts/verify-enrichment-module.ts)
+- All 32 code structure checks passed (16 for API route + 16 for AI module)
+
+### Code verification (32/32 checks passed):
+**API Route (src/app/api/edgar/enrich/route.ts):**
+- ✓ POST handler exports correctly
+- ✓ API key validation via x-api-key header
+- ✓ INGEST_API_KEY env var check
+- ✓ Returns 401 for invalid API key
+- ✓ OPENROUTER_API_KEY env var check
+- ✓ Returns 500 when OpenRouter key not configured
+- ✓ Parses filingId from request body
+- ✓ Has enrichSingleFiling function
+- ✓ Fetches filing by ID from database
+- ✓ Returns error for non-existent filing
+- ✓ Checks for existing enrichment
+- ✓ Returns error for already enriched filing
+- ✓ Calls enrichFiling from AI module
+- ✓ Stores enrichment in database (filingEnrichments table)
+- ✓ Returns enriched count in response
+- ✓ Returns errors array in response
+
+**AI Module (src/lib/ai/enrichment.ts):**
+- ✓ Uses Vercel AI SDK with OpenRouter
+- ✓ Zod schema validation for structured output
+- ✓ All required fields: companySummary, relevanceScore (1-100), relevanceReasoning, estimatedHeadcount, growthSignals, competitors
+- ✓ Retry logic (2 attempts with 1-second delay)
+- ✓ Returns result object (not throws) for batch resilience
+
+### External blocker:
+- OPENROUTER_API_KEY environment variable is not configured
+- Without this key, actual AI enrichment cannot be tested
+- The API correctly returns 500 with message "OPENROUTER_API_KEY environment variable is not configured"
+- This is expected behavior per the implementation
+
+### Verification:
+- Lint: 0 errors, 21 warnings (pre-existing import order)
+- TypeScript: passes cleanly
+- Mock data check: No mock data patterns found in codebase (grep clean)
+- Code structure verification: 32/32 checks passed
+
+### Feature status:
+- Feature #21: SKIPPED (requires OPENROUTER_API_KEY from user)
+
+### Current completion: 34/78 features passing
+
+---
+
 ## Session 38 - Feature #39: Saved filters CRUD - create load and delete filters
 Date: 2026-02-17
 
