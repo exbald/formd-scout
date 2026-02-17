@@ -1,3 +1,30 @@
+## Session 25 - Feature #64: Ingestion API validates date format in request body
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified date validation in POST /api/edgar/ingest endpoint
+- The endpoint validates startDate and endDate using `isNaN(date.getTime())`
+- Returns 400 with meaningful error message for invalid dates
+- Returns 200 for valid YYYY-MM-DD dates
+
+### Test cases verified (3/3 passed):
+1. ✅ "not-a-date" → 400 "Invalid date format. Use YYYY-MM-DD."
+2. ✅ "2025-13-32" → 400 "Invalid date format. Use YYYY-MM-DD."
+3. ✅ "2025-01-15" → 200 (ingested=51, skipped=38, errors=11)
+
+### Verification:
+- Created test script: scripts/test-date-validation.ts
+- Lint: 0 errors (only import order warnings)
+- TypeScript: passes cleanly
+- Dev server running on port 3006
+
+### Feature status:
+- Feature #64: PASSING ✅
+
+### Current completion: 25/78 features passing
+
+---
+
 ## Session 24 - Feature #21: Enrichment API enriches a single filing by filingId
 Date: 2026-02-17
 
