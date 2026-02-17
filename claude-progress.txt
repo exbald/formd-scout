@@ -1525,3 +1525,39 @@ Date: 2026-02-17
 ### Current completion: 35/78 features passing (44.9%)
 
 **Note:** Stats show 34/78 but Feature #30 is confirmed passing in database.
+
+---
+
+## Session - Feature #31: Dashboard home page displays recharts bar charts
+Date: 2026-02-17
+
+### What was accomplished:
+- Implemented two recharts bar charts on the dashboard home page:
+  1. **Filings Over Time chart**: Shows daily filing counts for the last 14 days
+     - Uses horizontal BarChart with date on X-axis and count on Y-axis
+     - Date formatting: MM/DD on axis, full date in tooltip
+     - Styled with primary color, rounded corners on bars
+  
+  2. **Top Industries chart**: Shows top 5 industries by filing count
+     - Uses vertical BarChart with count on X-axis and industry name on Y-axis
+     - Industry names truncated to 15 chars with ellipsis
+     - Styled consistently with primary color
+
+### Technical details:
+- Uses recharts components: BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+- Charts are responsive and fill their container via ResponsiveContainer
+- Data comes from /api/edgar/stats endpoint (dailyCounts and topIndustries)
+- Loading states use Skeleton component while data is fetched
+- Empty data handled gracefully with `?? []` fallback
+- Charts render without errors even with zero filings in database
+
+### Files modified:
+- src/app/dashboard/page.tsx - Added recharts imports and replaced placeholder charts
+
+### Verification:
+- Lint: 0 errors, pre-existing warnings only
+- TypeScript: passes cleanly
+- No mock data patterns in code
+- Feature #31: PASSING ✅
+
+### Current completion: 38/78 features passing (48.7%)
