@@ -1,3 +1,37 @@
+## Session 36 - Feature #34: Filings table displays sortable columns with color-coded relevance
+Date: 2026-02-17
+
+### What was accomplished:
+- Verified filings table page has complete sortable column implementation
+- All table columns verified: Company Name, Filing Date, Offering Amount, Industry, State, Relevance, Status
+- Clickable column headers with handleSort() function for sorting
+- SortIndicator component shows arrows (ArrowUpDown/ArrowUp/ArrowDown)
+- Relevance badge colors correctly implemented:
+  - Green (70-100): `text-green-600 dark:text-green-400`
+  - Yellow (40-69): `text-yellow-600 dark:text-yellow-400`
+  - Gray (1-39): `text-gray-500`
+- Status column shows "New" or "Amendment" badges
+- API supports sorting via sortBy and sortOrder params
+
+### Implementation details:
+- SortIndicator component (lines 178-187): Shows appropriate arrow based on sort state
+- handleSort() function (lines 489-499): Toggles sort order or sets new column
+- Table headers (lines 788-845): All clickable with hover effects
+- getRelevanceColor() and getRelevanceBadgeVariant() functions handle color coding
+
+### Verification:
+- Lint: 0 errors, 20 warnings (pre-existing import order)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #34: PASSING ✅
+
+### Current completion: 35/78 features passing
+
+---
+
 ## Session 35 - Feature #21: Enrichment API enriches a single filing by filingId
 Date: 2026-02-17
 
