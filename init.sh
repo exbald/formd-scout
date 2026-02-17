@@ -20,18 +20,37 @@ if [ "$NODE_VERSION" -lt 20 ]; then
 fi
 
 echo "[1/5] Checking Docker and PostgreSQL..."
-# Start PostgreSQL via Docker Compose if docker is available
+PG_BIN="./node_modules/@embedded-postgres/linux-x64/native/bin"
+PG_DATA="./pg-data"
+
+# Try Docker first, then embedded PostgreSQL
 if command -v docker &> /dev/null; then
     if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -q postgres; then
         echo "  Starting PostgreSQL via Docker Compose..."
-        docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || echo "  WARNING: Could not start Docker. Make sure PostgreSQL is running on port 5432."
+        docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null || echo "  WARNING: Could not start Docker."
         echo "  Waiting for PostgreSQL to be ready..."
         sleep 3
     else
         echo "  PostgreSQL container already running."
     fi
+elif [ -f "$PG_BIN/pg_ctl" ]; then
+    echo "  Using embedded PostgreSQL..."
+    if "$PG_BIN/pg_ctl" -D "$PG_DATA" status &>/dev/null; then
+        echo "  PostgreSQL already running."
+    else
+        if [ ! -d "$PG_DATA/base" ]; then
+            echo "  Initializing database cluster..."
+            rm -rf "$PG_DATA" /tmp/.s.PGSQL.5432* 2>/dev/null
+            "$PG_BIN/initdb" -D "$PG_DATA" -U dev_user --auth=trust --no-locale --encoding=UTF8
+        fi
+        rm -f "$PG_DATA/postmaster.pid" /tmp/.s.PGSQL.5432* 2>/dev/null
+        echo "  Starting PostgreSQL on port 5432..."
+        "$PG_BIN/pg_ctl" -D "$PG_DATA" -l "$PG_DATA/logfile" -o "-p 5432" start
+        sleep 2
+        npx tsx scripts/setup-db.ts 2>/dev/null || echo "  WARNING: DB setup script failed."
+    fi
 else
-    echo "  Docker not found. Ensure PostgreSQL is running on port 5432."
+    echo "  No Docker or embedded PostgreSQL found. Ensure PostgreSQL is running on port 5432."
 fi
 
 echo ""

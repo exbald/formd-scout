@@ -14,7 +14,17 @@ version: 1
 # Uncomment the commands you need for your specific project.
 # By default, this file has NO commands enabled - you must explicitly add them.
 
-commands: []
+commands:
+  - name: initdb
+    description: PostgreSQL database cluster initialization
+  - name: pg_ctl
+    description: PostgreSQL server control utility
+  - name: postgres
+    description: PostgreSQL database server
+  - name: psql
+    description: PostgreSQL command-line client
+  - name: pg_isready
+    description: PostgreSQL connection check utility
 
   # ==========================================
   # iOS Development Example
