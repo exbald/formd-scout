@@ -49,3 +49,6 @@ public/uploads
 /pg-data
 
 nul
+# autoforge runtime
+/.autoforge
+claude-progress.txt
