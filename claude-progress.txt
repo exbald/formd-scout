@@ -1,3 +1,61 @@
+## Session - Feature #42: Copy Summary copies top 10 results as formatted text
+Date: 2026-02-18
+
+### What was accomplished:
+- Implemented "Copy Summary" button on filings page (/dashboard/filings)
+- Button copies top 10 results as formatted text to clipboard
+- Added success/error toast notifications using sonner
+
+### Implementation details:
+1. **handleCopySummary function**:
+   - Fetches top 10 filings with current filter settings via API
+   - Formats each filing with: company name, filing date, offering amount, industry, state, relevance, status
+   - Includes active filters summary at the bottom of copied text
+   - Uses navigator.clipboard.writeText() for clipboard access
+   - Shows toast.success() with count on success, toast.error() on failure
+
+2. **Button UI**:
+   - Located next to "Export CSV" button in filter bar
+   - Uses Copy icon from lucide-react
+   - Disabled when loading or no filings available
+
+### Formatted text example:
+```
+Form D Filings Summary - Top 10 Results
+Generated: 2/18/2026
+==================================================
+
+1. Company Name Inc.
+   Filing Date: 2026-02-15
+   Offering: $10.5M
+   Industry: Technology
+   State: CA
+   Relevance: 85
+   Status: New
+
+... (10 filings)
+
+--------------------------------------------------
+Active Filters:
+  • Min Relevance: 60
+```
+
+### Files modified:
+- src/app/dashboard/filings/page.tsx - Added Copy import, toast import, handleCopySummary function, and Copy Summary button
+
+### Verification:
+- Lint: 0 errors, pre-existing warnings only (import order)
+- TypeScript: passes cleanly
+- Build: npx next build succeeds with all routes compiled
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #42: PASSING ✅
+
+### Current completion: 45/78 features passing (57.7%)
+
+---
+
 ## Session - Feature #38: Filing detail AI enrichment panel with Analyze Now button
 Date: 2026-02-18
 
