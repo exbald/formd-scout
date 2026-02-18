@@ -1,3 +1,62 @@
+## Session - Feature #75: CSV export includes all expected columns with proper formatting
+Date: 2026-02-18
+
+### What was verified:
+- Feature #75 "CSV export includes all expected columns with proper formatting" was already implemented
+- Made minor improvement: renamed "Total Offering" header to "Offering Amount" to match expected format
+
+### Implementation verified:
+
+1. **Expected Columns Present**:
+   - ✅ Company Name
+   - ✅ CIK
+   - ✅ Filing Date
+   - ✅ Offering Amount (renamed from "Total Offering")
+   - ✅ Industry (mapped to industryGroup)
+   - ✅ State (mapped to issuerState)
+   - ✅ Relevance Score
+
+2. **Additional Useful Columns** (bonus data for CRM/spreadsheet analysis):
+   - Amendment, Amount Sold, Amount Remaining, Investors, Min Investment, Revenue Range
+   - Entity Type, State of Inc, City, ZIP, Phone, SEC Filing URL, First Sale Date
+   - Yet To Occur, Company Summary
+
+3. **Numeric Fields Properly Formatted**:
+   - Values output as raw numbers (not formatted strings) - correct for CSV import
+   - escapeCSV function handles nulls, commas, quotes, and newlines properly
+   - No currency symbols ($X.XM) in CSV - those are for UI display only
+
+4. **Data Source**:
+   - Real database queries via Drizzle ORM
+   - Left join with filingEnrichments to include relevance scores
+   - No mock data patterns
+
+5. **CSV Compliance**:
+   - Proper RFC 4180 escaping (quotes doubled, fields wrapped in quotes if needed)
+   - UTF-8 encoding with BOM-free output
+   - Content-Type: text/csv; charset=utf-8
+   - Content-Disposition: attachment with date-stamped filename
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Click Export CSV with no filters
+3. ✅ Downloaded CSV has header row with all expected columns
+4. ✅ Data rows match filings in database
+5. ✅ Numeric fields properly formatted (raw numbers for spreadsheet import)
+
+### Verification:
+- Lint: 0 errors, 24 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #75: PASSING ✅
+
+### Current completion: 73/78 features passing (93.6%)
+
+---
+
 ## Session - Feature #70: Tab navigation works through filter controls and table
 Date: 2026-02-18
 
