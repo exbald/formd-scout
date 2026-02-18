@@ -157,20 +157,14 @@ const formatCurrency = (amount: number | null | undefined): string => {
   return formatDollarAmount(amount);
 };
 
-const getRelevanceBadgeVariant = (
-  score: number | null
-): "default" | "secondary" | "outline" => {
-  if (score === null) return "outline";
-  if (score >= 70) return "default";
-  if (score >= 40) return "secondary";
-  return "outline";
-};
-
-const getRelevanceColor = (score: number | null): string => {
-  if (score === null) return "text-muted-foreground";
-  if (score >= 70) return "text-green-600 dark:text-green-400";
-  if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
-  return "text-gray-500";
+const getRelevanceBadgeClass = (score: number | null): string => {
+  if (score === null) return "";
+  // Green badge for high relevance (70-100)
+  if (score >= 70) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800";
+  // Yellow/Amber badge for medium relevance (40-69)
+  if (score >= 40) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800";
+  // Gray badge for low relevance (1-39)
+  return "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400 border-gray-200 dark:border-gray-700";
 };
 
 // Sortable column type
@@ -918,7 +912,18 @@ export default function FilingsPage() {
             </div>
           ) : filings.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
-              No filings found matching your criteria.
+              {hasActiveFilters ? (
+                <div>
+                  <p className="mb-2">No filings found matching your criteria.</p>
+                  <p className="text-sm">Try adjusting your filters or <button onClick={handleClearFilters} className="text-primary hover:underline">clear all filters</button>.</p>
+                </div>
+              ) : (
+                <div>
+                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="mb-1">No filings in the database yet.</p>
+                  <p className="text-sm">Filings will appear here after data ingestion runs.</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -1010,8 +1015,8 @@ export default function FilingsPage() {
                       <td className="p-4">
                         {filing.relevanceScore !== null ? (
                           <Badge
-                            variant={getRelevanceBadgeVariant(filing.relevanceScore)}
-                            className={getRelevanceColor(filing.relevanceScore)}
+                            variant="outline"
+                            className={getRelevanceBadgeClass(filing.relevanceScore)}
                           >
                             {filing.relevanceScore}
                           </Badge>

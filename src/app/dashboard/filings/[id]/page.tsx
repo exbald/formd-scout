@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { formatDollarAmount } from "@/lib/format-currency";
 
 interface Filing {
   id: string;
@@ -87,18 +88,22 @@ const formatCurrency = (amount: string | number | null | undefined): string => {
 
 const getRelevanceColor = (score: number | null): string => {
   if (score === null) return "text-muted-foreground";
+  // Green for high relevance (70-100)
   if (score >= 70) return "text-green-600 dark:text-green-400";
-  if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
-  return "text-gray-500";
+  // Yellow/Amber for medium relevance (40-69)
+  if (score >= 40) return "text-amber-600 dark:text-amber-400";
+  // Gray for low relevance (1-39)
+  return "text-gray-600 dark:text-gray-400";
 };
 
-const getRelevanceBadgeVariant = (
-  score: number | null
-): "default" | "secondary" | "outline" => {
-  if (score === null) return "outline";
-  if (score >= 70) return "default";
-  if (score >= 40) return "secondary";
-  return "outline";
+const getRelevanceBadgeClass = (score: number | null): string => {
+  if (score === null) return "";
+  // Green badge for high relevance (70-100)
+  if (score >= 70) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800";
+  // Yellow/Amber badge for medium relevance (40-69)
+  if (score >= 40) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800";
+  // Gray badge for low relevance (1-39)
+  return "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400 border-gray-200 dark:border-gray-700";
 };
 
 export default function FilingDetailPage({ params }: FilingDetailPageProps) {
@@ -449,8 +454,8 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
                     Relevance Score
                   </p>
                   <Badge
-                    variant={getRelevanceBadgeVariant(filing.relevanceScore)}
-                    className={getRelevanceColor(filing.relevanceScore)}
+                    variant="outline"
+                    className={getRelevanceBadgeClass(filing.relevanceScore)}
                   >
                     {filing.relevanceScore !== null &&
                       filing.relevanceScore >= 70 &&
