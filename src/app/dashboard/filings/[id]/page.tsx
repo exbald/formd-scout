@@ -20,6 +20,7 @@ import {
   Users2,
   TrendingUp,
   Building,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -110,35 +111,65 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
   const [filing, setFiling] = useState<Filing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
+
+  const fetchFiling = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/edgar/filings/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError("Filing not found");
+        } else if (response.status === 401) {
+          setError("Unauthorized - please log in");
+        } else {
+          setError("Failed to load filing");
+        }
+        return;
+      }
+      const data = await response.json();
+      setFiling(data.filing);
+    } catch (err) {
+      console.error("Error fetching filing:", err);
+      setError("Failed to load filing");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchFiling = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`/api/edgar/filings/${id}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError("Filing not found");
-          } else if (response.status === 401) {
-            setError("Unauthorized - please log in");
-          } else {
-            setError("Failed to load filing");
-          }
-          return;
-        }
-        const data = await response.json();
-        setFiling(data.filing);
-      } catch (err) {
-        console.error("Error fetching filing:", err);
-        setError("Failed to load filing");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchFiling();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleEnrich = async () => {
+    if (!filing || isEnriching) return;
+
+    setIsEnriching(true);
+    setEnrichError(null);
+
+    try {
+      const response = await fetch(`/api/edgar/filings/${id}/enrich`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        setEnrichError(data.error || "Failed to enrich filing");
+        return;
+      }
+
+      // Refresh filing data to show new enrichment
+      await fetchFiling();
+    } catch (err) {
+      console.error("Error enriching filing:", err);
+      setEnrichError("Failed to enrich filing. Please try again.");
+    } finally {
+      setIsEnriching(false);
+    }
+  };
 
   // Loading state
   if (isLoading) {
@@ -400,7 +431,16 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {filing.enrichmentId ? (
+            {/* Enrichment loading state */}
+            {isEnriching ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
+                <p className="font-medium">Analyzing filing...</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  This may take a few seconds
+                </p>
+              </div>
+            ) : filing.enrichmentId ? (
               <div className="space-y-6">
                 {/* Relevance Score */}
                 <div className="text-center py-4">
@@ -513,14 +553,37 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
                     <p>Model: {filing.modelUsed}</p>
                   )}
                 </div>
+
+                {/* Re-analyze button */}
+                <Button
+                  variant="outline"
+                  onClick={handleEnrich}
+                  disabled={isEnriching}
+                  className="w-full"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Re-analyze
+                </Button>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8">
                 <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>AI enrichment not yet available.</p>
-                <p className="text-sm mt-2">
-                  Use the Enrich API to generate insights.
+                <p className="text-muted-foreground mb-4">
+                  AI enrichment not yet available.
                 </p>
+
+                {/* Error message */}
+                {enrichError && (
+                  <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+                    {enrichError}
+                  </div>
+                )}
+
+                {/* Analyze Now button */}
+                <Button onClick={handleEnrich} disabled={isEnriching}>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Analyze Now
+                </Button>
               </div>
             )}
           </CardContent>

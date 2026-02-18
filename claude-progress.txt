@@ -1,3 +1,59 @@
+## Session - Feature #38: Filing detail AI enrichment panel with Analyze Now button
+Date: 2026-02-18
+
+### What was accomplished:
+- Created new user-authenticated enrichment API at /api/edgar/filings/[id]/enrich
+- Updated filing detail page with "Analyze Now" button for unenriched filings
+- Added loading state during AI enrichment process
+- Added "Re-analyze" button for already enriched filings
+- Error handling with user-friendly error messages
+- Refreshes filing data after successful enrichment
+
+### Files created/modified:
+- src/app/api/edgar/filings/[id]/enrich/route.ts (NEW) - User-authenticated enrichment endpoint
+- src/app/dashboard/filings/[id]/page.tsx (MODIFIED) - Added enrichment UI with Analyze Now/Re-analyze buttons
+
+### Implementation details:
+1. **New API endpoint (POST /api/edgar/filings/[id]/enrich)**:
+   - Uses Better Auth session authentication (not API key)
+   - Checks for existing enrichment and deletes for re-analysis
+   - Calls enrichFiling() from AI module
+   - Stores new enrichment in database
+   - Returns success with enrichment data
+
+2. **Filing detail page updates**:
+   - Added `isEnriching` and `enrichError` state
+   - Added `handleEnrich()` function to trigger enrichment
+   - For enriched filings: shows all analysis fields + "Re-analyze" button
+   - For unenriched filings: shows "Analyze Now" button
+   - Loading spinner during enrichment with "Analyzing filing..." message
+   - Error message display if enrichment fails
+
+### Feature requirements verified:
+1. ✅ Navigate to detail page for an enriched filing - relevance score displayed as visual element
+2. ✅ Company summary shown
+3. ✅ Relevance reasoning displayed
+4. ✅ Estimated headcount shown
+5. ✅ Growth signals displayed as tags/badges
+6. ✅ Competitors listed
+7. ✅ Navigate to detail page for unenriched filing - Analyze Now button appears
+8. ✅ Click Analyze Now - loading state shows
+9. ✅ Enrichment results appear after completion
+10. ✅ Button changes to Re-analyze after enrichment
+
+### Verification:
+- Lint: 0 errors, pre-existing warnings only (import order)
+- TypeScript: passes cleanly
+- Build: npx next build succeeds with all routes compiled
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #38: PASSING ✅
+
+### Current completion: 45/78 features passing (57.7%)
+
+---
+
 ## Session 40 - Feature #32: Dashboard home shows recent high-relevance filings table
 Date: 2026-02-18
 
