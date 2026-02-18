@@ -1,3 +1,56 @@
+## Session - Feature #70: Tab navigation works through filter controls and table
+Date: 2026-02-18
+
+### What was implemented:
+- Added visible focus rings for all interactive elements on the filings page
+- Made table rows keyboard-focusable with proper Enter/Space navigation
+- Enhanced keyboard accessibility for the saved filters dropdown
+
+### Implementation details:
+
+1. **Mobile Card View Buttons (lines 1103-1108)**:
+   - Added `focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset`
+   - Focus ring appears inside the card when tabbed to
+
+2. **Desktop Table Rows (lines 1221-1236)**:
+   - Added `tabIndex={0}` to make rows keyboard-focusable
+   - Added focus styles: `focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring`
+   - Added `onKeyDown` handler for Enter and Space keys to navigate to detail page
+   - Users can now Tab through the table and press Enter to view a filing
+
+3. **Filter Expand Button (line 740)**:
+   - Added `focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md`
+   - Focus ring with offset for visibility against the card background
+
+4. **Saved Filters Dropdown Buttons (lines 947, 954)**:
+   - Load button: `focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1`
+   - Delete button: `focus:outline-none focus-visible:ring-2 focus-visible:ring-ring`
+
+5. **Clear All Filters Link (line 1090)**:
+   - Added `focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded`
+   - Inline link now has visible focus ring
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Press Tab repeatedly through filter controls - visible focus rings
+3. ✅ Verify each filter input receives visible focus
+4. ✅ Tab into the table area - rows are focusable
+5. ✅ Press Enter on focused row to navigate to detail page
+6. ✅ Focus rings visible on all interactive elements
+
+### Verification:
+- Lint: 0 errors, 25 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npx next build` succeeds with all routes
+- No mock data patterns in codebase
+
+### Feature status:
+- Feature #70: PASSING ✅
+
+### Current completion: 68/78 features passing (87.2%)
+
+---
+
 ## Session - Feature #72: Date range filter handles edge cases
 Date: 2026-02-18
 
