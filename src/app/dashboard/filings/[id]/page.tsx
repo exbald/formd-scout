@@ -22,6 +22,7 @@ import {
   Building,
   RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -162,15 +163,20 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
 
       if (!response.ok) {
         const data = await response.json();
-        setEnrichError(data.error || "Failed to enrich filing");
+        const errorMessage = data.error || "Failed to enrich filing";
+        setEnrichError(errorMessage);
+        toast.error(errorMessage);
         return;
       }
 
       // Refresh filing data to show new enrichment
       await fetchFiling();
+      toast.success("AI enrichment completed successfully");
     } catch (err) {
       console.error("Error enriching filing:", err);
-      setEnrichError("Failed to enrich filing. Please try again.");
+      const errorMessage = "Failed to enrich filing. Please try again.";
+      setEnrichError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       isEnrichingRef.current = false;
       setIsEnriching(false);

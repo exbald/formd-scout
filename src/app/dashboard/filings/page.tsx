@@ -240,7 +240,7 @@ export default function FilingsPage() {
   // Save filter dialog state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [filterName, setFilterName] = useState("");
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [filterNameError, setFilterNameError] = useState<string | null>(null);
 
   // Export state (prevents double-click multiple downloads)
   const [isExporting, setIsExporting] = useState(false);
@@ -431,7 +431,14 @@ export default function FilingsPage() {
   };
 
   const handleSaveFilter = async () => {
-    if (!filterName.trim()) return;
+    // Validate filter name
+    if (!filterName.trim()) {
+      setFilterNameError("Filter name is required");
+      return;
+    }
+
+    // Clear any previous error
+    setFilterNameError(null);
 
     try {
       const response = await fetch("/api/edgar/filters", {
@@ -447,7 +454,10 @@ export default function FilingsPage() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to save filter");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to save filter");
+      }
 
       // Refresh saved filters list
       const listResponse = await fetch("/api/edgar/filters");
@@ -456,13 +466,14 @@ export default function FilingsPage() {
         setSavedFilters(data.filters || []);
       }
 
+      const savedName = filterName.trim();
       setSaveDialogOpen(false);
       setFilterName("");
-      setSaveSuccess(true);
-      // Auto-hide success message after 3 seconds
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setFilterNameError(null);
+      toast.success(`Filter "${savedName}" saved successfully`);
     } catch (error) {
       console.error("Error saving filter:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to save filter");
     }
   };
 
@@ -481,19 +492,28 @@ export default function FilingsPage() {
   const handleDeleteFilter = async () => {
     if (!deleteFilterId) return;
 
+    // Find the filter name before deleting for the toast message
+    const filterToDelete = savedFilters.find((f) => f.id === deleteFilterId);
+    const filterName = filterToDelete?.filterName || "Filter";
+
     try {
       const response = await fetch(`/api/edgar/filters?id=${deleteFilterId}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to delete filter");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to delete filter");
+      }
 
       // Refresh saved filters list
       setSavedFilters(savedFilters.filter((f) => f.id !== deleteFilterId));
       setDeleteDialogOpen(false);
       setDeleteFilterId(null);
+      toast.success(`Filter "${filterName}" deleted`);
     } catch (error) {
       console.error("Error deleting filter:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to delete filter");
     }
   };
 
@@ -526,7 +546,10 @@ export default function FilingsPage() {
 
       // Trigger download
       const response = await fetch(`/api/edgar/export?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to export CSV");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to export CSV");
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -537,8 +560,10 @@ export default function FilingsPage() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success("CSV exported successfully");
     } catch (error) {
       console.error("Error exporting CSV:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to export CSV");
     } finally {
       setIsExporting(false);
     }
@@ -900,12 +925,6 @@ export default function FilingsPage() {
               <Copy className="h-4 w-4 mr-2" />
               Copy Summary
             </Button>
-            {/* Success feedback */}
-            {saveSuccess && (
-              <span className="text-sm text-green-600 dark:text-green-400 ml-2 animate-pulse">
-                Filter saved!
-              </span>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -1140,7 +1159,14 @@ export default function FilingsPage() {
       )}
 
       {/* Save Filter Dialog */}
-      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+      <Dialog open={saveDialogOpen} onOpenChange={(open) => {
+        setSaveDialogOpen(open);
+        if (!open) {
+          // Clear error and name when dialog closes
+          setFilterNameError(null);
+          setFilterName("");
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Save Filter</DialogTitle>
@@ -1155,15 +1181,23 @@ export default function FilingsPage() {
                 id="filterName"
                 placeholder="e.g., High-value tech companies"
                 value={filterName}
-                onChange={(e) => setFilterName(e.target.value)}
+                onChange={(e) => {
+                  setFilterName(e.target.value);
+                  // Clear error when user starts typing
+                  if (filterNameError) setFilterNameError(null);
+                }}
+                className={filterNameError ? "border-destructive" : ""}
               />
+              {filterNameError && (
+                <p className="text-sm text-destructive">{filterNameError}</p>
+              )}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveFilter} disabled={!filterName.trim()}>
+            <Button onClick={handleSaveFilter}>
               Save
             </Button>
           </DialogFooter>
