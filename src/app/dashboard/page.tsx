@@ -59,42 +59,36 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Single useEffect fetches all dashboard data in parallel for optimal performance
   useEffect(() => {
-    async function fetchStats() {
+    async function fetchDashboardData() {
       try {
-        const response = await fetch("/api/edgar/stats");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch stats: ${response.status}`);
+        // Fetch stats and high-relevance filings in parallel - only 2 API calls
+        const [statsResponse, filingsResponse] = await Promise.all([
+          fetch("/api/edgar/stats"),
+          fetch("/api/edgar/filings?minRelevance=60&sortBy=relevanceScore&sortOrder=desc&limit=10"),
+        ]);
+
+        if (!statsResponse.ok) {
+          throw new Error(`Failed to fetch stats: ${statsResponse.status}`);
         }
-        const data = await response.json();
-        setStats(data);
+
+        const statsData = await statsResponse.json();
+        setStats(statsData);
+
+        // Filings endpoint is optional - don't fail if it errors
+        if (filingsResponse.ok) {
+          const filingsData = await filingsResponse.json();
+          setHighRelevanceFilings(filingsData.filings || []);
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load stats");
+        setError(err instanceof Error ? err.message : "Failed to load dashboard");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchStats();
-  }, []);
-
-  useEffect(() => {
-    async function fetchHighRelevanceFilings() {
-      try {
-        // Fetch top 10 filings with relevance score >= 60
-        const response = await fetch(
-          "/api/edgar/filings?minRelevance=60&sortBy=relevanceScore&sortOrder=desc&limit=10"
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setHighRelevanceFilings(data.filings || []);
-        }
-      } catch (err) {
-        console.error("Error fetching high-relevance filings:", err);
-      }
-    }
-
-    fetchHighRelevanceFilings();
+    fetchDashboardData();
   }, []);
 
   // Get relevance badge styling
