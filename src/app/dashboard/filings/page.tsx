@@ -212,7 +212,7 @@ export default function FilingsPage() {
     searchParams.get("minRelevance") || ""
   );
   const [isAmendment, setIsAmendment] = useState(
-    searchParams.get("isAmendment") || ""
+    searchParams.get("isAmendment") || "all"
   );
   const [yetToOccur, setYetToOccur] = useState(
     searchParams.get("yetToOccur") === "true"
@@ -314,7 +314,7 @@ export default function FilingsPage() {
       if (selectedStates.length > 0)
         params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
-      if (isAmendment) params.set("isAmendment", isAmendment);
+      if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
       params.set("page", page.toString());
       params.set("sortBy", sortBy);
@@ -431,7 +431,7 @@ export default function FilingsPage() {
     const urlIndustryGroup = searchParams.get("industryGroup")?.split(",").filter(Boolean) || [];
     const urlState = searchParams.get("state")?.split(",").filter(Boolean) || [];
     const urlMinRelevance = searchParams.get("minRelevance") || "";
-    const urlIsAmendment = searchParams.get("isAmendment") || "";
+    const urlIsAmendment = searchParams.get("isAmendment") || "all";
     const urlYetToOccur = searchParams.get("yetToOccur") === "true";
     const urlPage = parseInt(searchParams.get("page") || "1", 10);
     const urlSortBy = searchParams.get("sortBy") || "filingDate";
@@ -611,7 +611,7 @@ export default function FilingsPage() {
       if (selectedStates.length > 0)
         params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
-      if (isAmendment) params.set("isAmendment", isAmendment);
+      if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
 
       // Trigger download
@@ -654,7 +654,7 @@ export default function FilingsPage() {
       if (selectedStates.length > 0)
         params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
-      if (isAmendment) params.set("isAmendment", isAmendment);
+      if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
       params.set("sortBy", sortBy);
       params.set("sortOrder", sortOrder);
@@ -734,7 +734,7 @@ export default function FilingsPage() {
     selectedIndustries.length > 0 ||
     selectedStates.length > 0 ||
     minRelevance ||
-    isAmendment ||
+    (isAmendment && isAmendment !== "all") ||
     yetToOccur;
 
   // Handle column header click for sorting
@@ -929,7 +929,7 @@ export default function FilingsPage() {
                   <SelectValue placeholder="All filings" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Filings</SelectItem>
+                  <SelectItem value="all">All Filings</SelectItem>
                   <SelectItem value="false">New Only</SelectItem>
                   <SelectItem value="true">Amendments Only</SelectItem>
                 </SelectContent>

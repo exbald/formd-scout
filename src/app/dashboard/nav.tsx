@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { FileSearch, LayoutDashboard, FileText, Settings, LogOut, Menu, X } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Separator } from "@/components/ui/separator";
 import { useSession, signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -105,6 +106,7 @@ export function DashboardNav({
 
           {/* Desktop User section - visible on md and up */}
           <div className="hidden md:flex items-center gap-4">
+            <ModeToggle />
             {isPending ? (
               <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
             ) : session ? (
@@ -171,6 +173,12 @@ export function DashboardNav({
               })}
 
               <Separator className="my-3" />
+
+              {/* Theme Toggle */}
+              <div className="flex items-center gap-3 px-4 py-2">
+                <span className="text-sm text-muted-foreground">Theme</span>
+                <ModeToggle />
+              </div>
 
               {/* Mobile User Section */}
               {isPending ? (

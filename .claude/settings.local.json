@@ -13,11 +13,14 @@
       "Bash(git log:*)",
       "Bash(find:*)",
       "Bash(git checkout:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "mcp__playwright__browser_console_messages",
+      "Bash(ls:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
+    "n8n-mcp",
     "shadcn",
     "playwright",
     "next-devtools"
