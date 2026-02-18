@@ -233,7 +233,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
         </div>
         <Button variant="outline" asChild>
           <a
-            href={`https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=D&CIK=${filing.cik}`}
+            href={filing.filingUrl || `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=D&CIK=${filing.cik}`}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -347,6 +347,17 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
                 {[filing.issuerStreet, filing.issuerCity, filing.issuerState, filing.issuerZip]
                   .filter(Boolean)
                   .join(", ") || "N/A"}
+              </p>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Building2 className="h-3 w-3" />
+                Phone
+              </p>
+              <p className="text-sm font-medium">
+                {filing.issuerPhone || "N/A"}
               </p>
             </div>
 

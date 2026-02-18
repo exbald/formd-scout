@@ -1,3 +1,6 @@
+import { config } from 'dotenv';
+config();
+
 import { db } from '../src/lib/db';
 import { formDFilings } from '../src/lib/schema';
 import { sql, ilike } from 'drizzle-orm';
