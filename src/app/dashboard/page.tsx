@@ -392,7 +392,7 @@ export default function DashboardPage() {
                             <span className="font-medium">{filing.companyName}</span>
                           </td>
                           <td className="p-4 text-muted-foreground">
-                            {filing.filingDate}
+                            {formatDate(filing.filingDate)}
                           </td>
                           <td className="p-4">
                             {filing.totalOffering !== null
@@ -434,7 +434,7 @@ export default function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium truncate">{filing.companyName}</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {filing.filingDate}
+                            {formatDate(filing.filingDate)}
                           </p>
                         </div>
                         {filing.relevanceScore !== null && (

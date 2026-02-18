@@ -707,7 +707,7 @@ export default function FilingsPage() {
         <CardContent className="p-3 md:p-4">
           {/* Filter Header - always visible, clickable on mobile to expand */}
           <button
-            className="flex items-center justify-between w-full md:w-auto md:pointer-events-none"
+            className="flex items-center justify-between w-full md:w-auto md:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
             onClick={() => setFiltersExpanded(!filtersExpanded)}
             aria-expanded={filtersExpanded}
             aria-controls="filter-controls"
@@ -902,14 +902,14 @@ export default function FilingsPage() {
                       >
                         <button
                           onClick={() => handleLoadFilter(filter)}
-                          className="flex-1 text-left text-sm truncate hover:text-primary"
+                          className="flex-1 text-left text-sm truncate hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1"
                           aria-label={`Load filter: ${filter.filterName}`}
                         >
                           {filter.filterName}
                         </button>
                         <button
                           onClick={() => openDeleteDialog(filter.id)}
-                          className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive"
+                          className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           aria-label={`Delete filter: ${filter.filterName}`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1045,7 +1045,7 @@ export default function FilingsPage() {
               {hasActiveFilters ? (
                 <div>
                   <p className="mb-2">No filings found matching your criteria.</p>
-                  <p className="text-sm">Try adjusting your filters or <button onClick={handleClearFilters} className="text-primary hover:underline">clear all filters</button>.</p>
+                  <p className="text-sm">Try adjusting your filters or <button onClick={handleClearFilters} className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">clear all filters</button>.</p>
                 </div>
               ) : (
                 <div>
@@ -1062,7 +1062,7 @@ export default function FilingsPage() {
                 {filings.map((filing) => (
                   <button
                     key={filing.id}
-                    className="w-full p-4 text-left hover:bg-muted/50 transition-colors"
+                    className="w-full p-4 text-left hover:bg-muted/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
                     onClick={() => router.push(`/dashboard/filings/${filing.id}`)}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -1180,10 +1180,17 @@ export default function FilingsPage() {
                     {filings.map((filing) => (
                       <tr
                         key={filing.id}
-                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                        tabIndex={0}
+                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                         onClick={() =>
                           router.push(`/dashboard/filings/${filing.id}`)
                         }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            router.push(`/dashboard/filings/${filing.id}`);
+                          }
+                        }}
                       >
                         <td className="p-4">
                           <span className="font-medium">{filing.companyName}</span>
