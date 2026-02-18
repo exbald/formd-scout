@@ -1,3 +1,72 @@
+## Session - Feature #68: Filings table usable on mobile devices at 375px
+Date: 2026-02-18
+
+### What was implemented:
+- Added comprehensive mobile responsive design for the filings page at 375px viewport
+- Implemented both card view (mobile) and table view (desktop) for filings data
+
+### Implementation details:
+
+1. **Collapsible Filter Panel (src/app/dashboard/filings/page.tsx)**:
+   - Added `filtersExpanded` state (collapsed by default on mobile)
+   - Filter header is clickable on mobile to expand/collapse
+   - Chevron indicator (ChevronDown/ChevronUp) shows current state
+   - Desktop always shows expanded filters
+
+2. **Mobile Card View for Filings**:
+   - Added dedicated card view visible only on mobile (`md:hidden`)
+   - Cards display: company name, relevance badge, status badge, filing date, offering amount, industry, state
+   - Each card is clickable to navigate to detail page
+   - Uses `divide-y` for visual separation between cards
+
+3. **Desktop Table View**:
+   - Table view hidden on mobile, shown on `md:` breakpoint and up
+   - All existing functionality preserved
+
+4. **Sort Controls (Mobile)**:
+   - Flex direction changes from row to column on mobile
+   - Sort select width reduced to `w-[130px]` on mobile
+   - Sort order button shows only arrow icon on mobile, full text on desktop
+
+5. **Pagination (Mobile)**:
+   - Flex direction changes from row to column on mobile
+   - Buttons show only icons on mobile, full text on desktop
+   - Centered layout on mobile, justified on desktop
+
+6. **Action Buttons**:
+   - Scrollable horizontally on mobile with `overflow-x-auto`
+   - Each button has `shrink-0` to prevent squishing
+   - Shortened labels on mobile (e.g., "Clear" vs "Clear Filters", "Copy" vs "Copy Summary")
+
+7. **Navigation (src/app/dashboard/nav.tsx)**:
+   - Already has mobile hamburger menu with expandable nav items
+   - User info and sign out in mobile menu dropdown
+
+8. **Dashboard Page (src/app/dashboard/page.tsx)**:
+   - Already has responsive grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+   - Responsive header: `text-2xl sm:text-3xl`
+   - Charts stack vertically on mobile: `grid-cols-1 lg:grid-cols-2`
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings at 375px viewport width
+2. ✅ Table is usable via card layout (horizontal scroll also available but card view preferred)
+3. ✅ All essential data columns are accessible (company name, date, offering, industry, state, relevance, status)
+4. ✅ Filter bar is usable on mobile (collapsible panel)
+5. ✅ Pagination controls accessible on mobile (stacked layout with icon buttons)
+
+### Verification:
+- Lint: 0 errors, 24 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npx next build` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #68: PASSING ✅
+
+### Current completion: 68/78 features passing (87.2%)
+
+---
+
 ## Session - Feature #69: Form controls have proper labels and ARIA attributes
 Date: 2026-02-18
 
