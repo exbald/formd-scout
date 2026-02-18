@@ -1,3 +1,55 @@
+## Session - Feature #71: Filing dates display correctly and sort across boundaries
+Date: 2026-02-18
+
+### What was implemented:
+- Verified date formatting uses human-readable format (Jan 15, 2025) via date-fns
+- Verified sorting works correctly across month boundaries using PostgreSQL date type
+- Applied formatDate to all date displays across the application
+
+### Implementation details:
+
+1. **Date Formatting Utility (src/lib/format-date.ts)**:
+   - Created utility function using date-fns for consistent date formatting
+   - Format: "MMM d, yyyy" (e.g., "Jan 15, 2025")
+   - Handles null/undefined gracefully, returning "N/A"
+   - Fallback for invalid dates returns original string
+
+2. **Date Displays Updated**:
+   - Filings page table: `{formatDate(filing.filingDate)}`
+   - Filings page mobile card view: `{formatDate(filing.filingDate)}`
+   - Copy summary: Uses formatted date
+   - Filing detail page header: `{formatDate(filing.filingDate)}`
+   - Filing detail page first sale date: `{formatDate(filing.firstSaleDate)}`
+   - Dashboard page high relevance table: `{formatDate(filing.filingDate)}`
+   - Dashboard page mobile card view: `{formatDate(filing.filingDate)}`
+
+3. **Sorting Implementation (src/app/api/edgar/filings/route.ts)**:
+   - Filing dates stored as PostgreSQL `date` type in database
+   - Sorting uses database ORDER BY on the date column directly
+   - PostgreSQL date type naturally sorts chronologically
+   - Cross-month sorting works correctly (Jan 31 < Feb 1)
+   - Both ascending and descending sort orders supported
+
+### Feature requirements verified:
+1. ✅ Filings from different months exist in database
+2. ✅ Navigate to /dashboard/filings
+3. ✅ Sort by filing date ascending - chronological order works
+4. ✅ Sort by filing date descending - reverse order works
+5. ✅ Date format is human-readable ("Jan 15, 2025" not "2025-01-15")
+
+### Verification:
+- Lint: 0 errors, 24 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #71: PASSING ✅
+
+### Current completion: 69/78 features passing (88.5%)
+
+---
+
 ## Session - Feature #68: Filings table usable on mobile devices at 375px
 Date: 2026-02-18
 
