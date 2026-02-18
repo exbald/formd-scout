@@ -21,6 +21,7 @@ import {
   Copy,
   AlertCircle,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDollarAmount } from "@/lib/format-currency";
@@ -240,6 +241,9 @@ export default function FilingsPage() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Export state (prevents double-click multiple downloads)
+  const [isExporting, setIsExporting] = useState(false);
 
   // Saved filters state
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
@@ -499,6 +503,10 @@ export default function FilingsPage() {
   };
 
   const handleExportCsv = async () => {
+    // Prevent double-click from triggering multiple exports
+    if (isExporting) return;
+
+    setIsExporting(true);
     try {
       const params = new URLSearchParams();
 
@@ -531,6 +539,8 @@ export default function FilingsPage() {
       document.body.removeChild(a);
     } catch (error) {
       console.error("Error exporting CSV:", error);
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -872,9 +882,14 @@ export default function FilingsPage() {
               variant="outline"
               size="sm"
               onClick={handleExportCsv}
+              disabled={isExporting}
             >
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+              {isExporting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {isExporting ? "Exporting..." : "Export CSV"}
             </Button>
             <Button
               variant="outline"
