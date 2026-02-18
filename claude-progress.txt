@@ -2614,3 +2614,45 @@ Date: 2026-02-18
 - Feature #54: PASSING ✅
 
 ### Current completion: 54/78 features passing (69.2%)
+
+---
+
+## Session - Feature #61: Empty and whitespace-only search returns all results
+Date: 2026-02-18
+
+### What was verified:
+- Feature #61 "Empty and whitespace-only search returns all results" was already partially implemented
+- The filings page and API already had search.trim() applied in most places
+
+### Additional fix applied:
+- Updated /api/edgar/export/route.ts to use search.trim() for consistency
+- Changed `if (search)` to `if (search?.trim())` and wrapped the value in search.trim()
+
+### Implementation verified:
+1. **Filings page (src/app/dashboard/filings/page.tsx)**:
+   - Line 261: `if (search.trim()) params.set("search", search.trim())` in fetchFilings
+   - Line 514: `if (search.trim()) params.set("search", search.trim())` in handleExport
+   - Line 552: `if (search.trim()) params.set("search", search.trim())` in handleCopySummary
+   - Line 600: `if (search.trim()) activeFilters.push(...)` in filter summary
+
+2. **Filings API (src/app/api/edgar/filings/route.ts)**:
+   - Line 114: `conditions.push(ilike(formDFilings.companyName, `%${search.trim()}%`))`
+
+3. **Export API (src/app/api/edgar/export/route.ts)** (newly fixed):
+   - Line 96: `conditions.push(ilike(formDFilings.companyName, `%${search.trim()}%`))`
+
+### Feature requirements verified:
+- Clearing the search field completely → shows all filings (no search filter applied)
+- Entering only whitespace → treated as empty (trimmed before checking truthiness)
+- Search param is not added to API request when search is empty or whitespace-only
+
+### Verification:
+- Lint: 0 errors, pre-existing import order warnings only
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #61: PASSING ✅
+
+### Current completion: 61/78 features passing (78.2%)
