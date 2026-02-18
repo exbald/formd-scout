@@ -1689,3 +1689,36 @@ Date: 2026-02-18
 - Feature #36: PASSING ✅
 
 ### Current completion: 40/78 features passing (51.3%)
+
+## Session - Feature #37: Filing detail page shows all data fields in two-column layout
+Date: 2026-02-18
+
+### What was accomplished:
+- Added missing issuerPhone field to filing detail page left column
+- Improved SEC EDGAR link to use stored filingUrl with fallback to company search
+- Verified all required fields are displayed in left column:
+  - Entity type ✅
+  - Industry ✅
+  - Revenue range ✅
+  - Offering amounts (Total, Sold, Amount Remaining) ✅
+  - Investor count ✅
+  - Min investment ✅
+  - Address ✅
+  - Phone ✅ (newly added)
+- Verified two-column layout with responsive grid (grid-cols-1 lg:grid-cols-2)
+- Verified back button works with history-aware navigation
+- Verified SEC EDGAR link opens in new tab with proper attributes
+
+### Files modified:
+- src/app/dashboard/filings/[id]/page.tsx - Added phone field, improved SEC EDGAR link
+
+### Verification:
+- Lint: 0 errors, 22 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #37: PASSING ✅
+
+### Current completion: 41/78 features passing (52.6%)
