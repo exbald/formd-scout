@@ -134,12 +134,13 @@ export async function GET(req: NextRequest) {
       .orderBy(formDFilings.filingDate);
 
     // Generate CSV
+    // Note: Header names chosen to match common CRM/spreadsheet conventions
     const headers = [
       "Company Name",
       "CIK",
       "Filing Date",
       "Amendment",
-      "Total Offering",
+      "Offering Amount",
       "Amount Sold",
       "Amount Remaining",
       "Investors",
