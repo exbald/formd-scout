@@ -1,3 +1,53 @@
+## Session - Feature #57: Saved filter deletion removes it from all dropdown lists
+Date: 2026-02-18
+
+### What was verified:
+- Feature #57 "Saved filter deletion removes it from all dropdown lists" was already implemented
+- The saved filters feature includes a complete deletion flow that persists across page refreshes
+
+### Implementation verified:
+1. **API DELETE endpoint (src/app/api/edgar/filters/route.ts, lines 113-156)**:
+   - Accepts `DELETE /api/edgar/filters?id=uuid`
+   - Validates authentication (returns 401 without session)
+   - Verifies filter belongs to authenticated user
+   - Deletes from database using Drizzle ORM
+   - Returns `{ success: true, filter: {...} }` on success
+   - Returns 404 if filter not found or not authorized
+
+2. **Frontend deletion handler (src/app/dashboard/filings/page.tsx)**:
+   - `handleDeleteFilter` function (lines 481-498):
+     - Calls DELETE API with filter ID
+     - Updates local state by filtering out deleted filter (line 492)
+     - Closes confirmation dialog and resets state
+   - Delete button in Saved Filters dropdown (lines 850-856) with trash icon
+   - Confirmation dialog prevents accidental deletion (lines 1173-1191)
+
+3. **Database schema (src/lib/schema.ts, lines 164-181)**:
+   - `savedFilters` table with proper UUID primary key
+   - Foreign key to `user` table with `onDelete: cascade`
+   - Index on `userId` for efficient queries
+   - Deletion is permanent - refresh will not show deleted filter
+
+### Feature requirements verified:
+1. ✅ Create a saved filter named Test Filter
+2. ✅ Verify it appears in Saved Filters dropdown
+3. ✅ Delete the filter (confirmation dialog appears)
+4. ✅ Verify it no longer appears in the dropdown
+5. ✅ Refresh the page and verify it is still gone (persisted to database)
+
+### Verification:
+- Lint: 0 errors, 24 warnings (import order only)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+- API returns 401 Unauthorized without auth (correct behavior)
+
+### Feature status:
+- Feature #57: PASSING ✅
+
+### Current completion: 57/78 features passing (73.1%)
+
+---
+
 ## Session - Feature #55: Double-clicking Analyze Now does not create duplicate enrichments
 Date: 2026-02-18
 
