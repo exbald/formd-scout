@@ -1,3 +1,42 @@
+## Session - Feature #46: Dashboard handles empty database gracefully
+Date: 2026-02-18
+
+### What was accomplished:
+- Verified and improved empty state handling across the dashboard and filings pages
+- Charts now display friendly empty state messages instead of blank charts
+- Filings page differentiates between empty database and filter results with no matches
+
+### Implementation details:
+1. **Dashboard page (src/app/dashboard/page.tsx)**:
+   - Stats cards already show 0 values via `stats?.today.count ?? 0` pattern
+   - Added explicit empty state for "Filings Over Time" chart with Calendar icon and message
+   - Added explicit empty state for "Top Industries" chart with TrendingUp icon and message
+   - Recent High-Relevance Filings table already has empty state handling
+
+2. **Filings page (src/app/dashboard/filings/page.tsx)**:
+   - Improved empty state to be context-aware:
+     - With active filters: "No filings found matching your criteria" + clear filters link
+     - Empty database: "No filings in the database yet" with FileText icon and explanation
+
+### Empty state verification:
+1. ✅ Stats cards show 0 or appropriate defaults (today.count, thisWeek.count, highRelevanceCount, averageOffering)
+2. ✅ Charts render empty state without errors (both Filings Over Time and Top Industries)
+3. ✅ Recent filings table shows empty state message ("No high-relevance filings found...")
+4. ✅ Filings page shows context-aware empty state (database empty vs. filter results)
+
+### Verification:
+- Lint: 0 errors, pre-existing import order warnings only
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #46: PASSING ✅
+
+### Current completion: 51/78 features passing (65.4%)
+
+---
+
 ## Session - Feature #50: Dollar amounts formatted correctly throughout the app
 Date: 2026-02-18
 
@@ -2158,3 +2197,47 @@ Date: 2026-02-18
 - Feature #49: PASSING
 
 ### Current completion: 50/78 features passing (64.1%)
+
+---
+
+## Session - Feature #51: Relevance badge colors match score ranges
+Date: 2026-02-18
+
+### What was verified:
+- Feature #51 "Relevance badge colors match score ranges" was already implemented
+- The relevance badges in both the filings table and detail page use proper color coding
+
+### Implementation verified:
+1. **Filings table (src/app/dashboard/filings/page.tsx)**:
+   - `getRelevanceBadgeClass()` function returns color-coded Tailwind classes
+   - Badge component uses `variant="outline"` with custom classes
+   - Unenriched filings show "—" without a badge
+
+2. **Filing detail page (src/app/dashboard/filings/[id]/page.tsx)**:
+   - Same `getRelevanceBadgeClass()` function
+   - Also has `getRelevanceColor()` for the large score display
+   - Badge shows priority text (High/Medium/Low Priority)
+
+3. **Color scheme per spec**:
+   - **Green (70-100):** `bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800`
+   - **Amber/Yellow (40-69):** `bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800`
+   - **Gray (1-39):** `bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400 border-gray-200 dark:border-gray-700`
+   - **No score:** Shows "—" (no badge)
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings with enriched filings
+2. ✅ Filings with score 70-100 have green badges
+3. ✅ Filings with score 40-69 have amber/yellow badges
+4. ✅ Filings with score 1-39 have gray badges
+5. ✅ Unenriched filings show no relevance badge (just "—")
+
+### Verification:
+- Lint: 0 errors, pre-existing warnings only
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+- Dev server starts without errors
+
+### Feature status:
+- Feature #51: PASSING ✅
+
+### Current completion: 51/78 features passing (65.4%)
