@@ -54,6 +54,50 @@ Date: 2026-02-18
 
 ---
 
+## Session - Feature #63: Save Filter requires a non-empty filter name
+Date: 2026-02-18
+
+### What was accomplished:
+- Added validation error display when attempting to save a filter without a name
+- Previously the Save button was disabled - now it allows clicking and shows an error
+
+### Implementation details:
+1. **Added filterNameError state (src/app/dashboard/filings/page.tsx)**:
+   - New state: `const [filterNameError, setFilterNameError] = useState<string | null>(null)`
+   - Replaced the old `saveSuccess` state (which was unused after toast migration)
+
+2. **Modified handleSaveFilter function**:
+   - Now shows validation error instead of silently returning
+   - `if (!filterName.trim()) { setFilterNameError("Filter name is required"); return; }`
+   - Clears error on successful save
+
+3. **Updated Save Filter Dialog**:
+   - Removed `disabled={!filterName.trim()}` from Save button
+   - Added `onOpenChange` handler to clear error when dialog closes
+   - Input shows red border when error exists: `className={filterNameError ? "border-destructive" : ""}`
+   - Error message displayed below input: `{filterNameError && (<p className="text-sm text-destructive">{filterNameError}</p>)}`
+   - Error clears when user starts typing
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Click Save Filter button
+3. ✅ Attempt to save without entering a filter name - shows validation error
+4. ✅ Error message "Filter name is required" is displayed in red
+5. ✅ Enter a valid name and verify save succeeds (with toast notification)
+
+### Verification:
+- Lint: 0 errors, 24 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #63: PASSING ✅
+
+### Current completion: 65/78 features passing (83.3%)
+
+---
+
 ## Session - Feature #60: Special characters in search do not crash the app
 Date: 2026-02-18
 
