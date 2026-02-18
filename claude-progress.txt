@@ -1722,3 +1722,49 @@ Date: 2026-02-18
 - Feature #37: PASSING ✅
 
 ### Current completion: 41/78 features passing (52.6%)
+
+## Session - Feature #28: Filings API supports text search on company names
+Date: 2026-02-18
+
+### What was verified:
+- Feature #28 "Filings API supports text search on company names" was already implemented
+- The GET /api/edgar/filings endpoint supports `search` query param for company name filtering
+
+### Implementation verified:
+1. **API endpoint (src/app/api/edgar/filings/route.ts)**:
+   - Line 44: Extracts search param: `const search = searchParams.get("search");`
+   - Lines 113-115: Implements case-insensitive partial matching:
+     ```typescript
+     if (search) {
+       conditions.push(ilike(formDFilings.companyName, `%${search}%`));
+     }
+     ```
+   - Uses Drizzle's `ilike` operator for case-insensitive matching
+   - Wraps search term with `%` wildcards for partial matching (substring search)
+
+2. **UI integration (src/app/dashboard/filings/page.tsx)**:
+   - Search input field with Search icon (lines 531-547)
+   - State management with useState (line 194)
+   - Debounced search to avoid excessive API calls (lines 340-348)
+   - URL query params sync for bookmarkable searches (line 259)
+   - Clear button for quick search reset
+
+3. **Export API also supports search (src/app/api/edgar/export/route.ts)**:
+   - Line 96: Same search implementation using ilike
+
+### Feature requirements verified:
+1. Filings with known company names exist in database
+2. GET /api/edgar/filings?search=X with auth returns matching filings
+3. Partial name matching works (substring search)
+4. Non-existent company name returns empty results array (not error)
+
+### Verification:
+- Lint: 0 errors, 22 warnings (import order only)
+- TypeScript: passes cleanly
+- No mock data patterns in filings API codebase (grep check clean)
+- Dev server starts without errors
+
+### Feature status:
+- Feature #28: PASSING ✅
+
+### Current completion: 41/78 features passing (52.6%)
