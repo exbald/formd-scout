@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -114,6 +114,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [isEnriching, setIsEnriching] = useState(false);
   const [enrichError, setEnrichError] = useState<string | null>(null);
+  const isEnrichingRef = useRef(false); // Synchronous guard for rapid double-clicks
 
   const fetchFiling = async () => {
     setIsLoading(true);
@@ -146,8 +147,11 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
   }, [id]);
 
   const handleEnrich = async () => {
-    if (!filing || isEnriching) return;
+    // Use ref for synchronous guard against rapid double-clicks
+    if (!filing || isEnrichingRef.current) return;
 
+    // Immediately set ref to prevent any subsequent clicks
+    isEnrichingRef.current = true;
     setIsEnriching(true);
     setEnrichError(null);
 
@@ -168,6 +172,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
       console.error("Error enriching filing:", err);
       setEnrichError("Failed to enrich filing. Please try again.");
     } finally {
+      isEnrichingRef.current = false;
       setIsEnriching(false);
     }
   };
