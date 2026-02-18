@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   FileText,
@@ -260,6 +260,9 @@ export default function FilingsPage() {
   // Date range validation state
   const [dateRangeError, setDateRangeError] = useState<string | null>(null);
 
+  // Request cancellation ref to prevent stale data from out-of-order responses
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // Validate date range - returns true if valid, false if invalid
   const validateDateRange = useCallback((start: string, end: string): boolean => {
     // Clear any previous error
@@ -287,6 +290,15 @@ export default function FilingsPage() {
       return;
     }
 
+    // Cancel any in-flight request to prevent stale data
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create a new AbortController for this request
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     setIsLoading(true);
     setError(null);
     try {
@@ -308,7 +320,15 @@ export default function FilingsPage() {
       params.set("sortBy", sortBy);
       params.set("sortOrder", sortOrder);
 
-      const response = await fetch(`/api/edgar/filings?${params.toString()}`);
+      const response = await fetch(`/api/edgar/filings?${params.toString()}`, {
+        signal: abortController.signal,
+      });
+
+      // If request was aborted, don't process the response
+      if (abortController.signal.aborted) {
+        return;
+      }
+
       if (!response.ok) {
         // Try to get error message from response
         let errorMessage = "Failed to load filings";
@@ -330,10 +350,17 @@ export default function FilingsPage() {
         scroll: false,
       });
     } catch (err) {
+      // Ignore abort errors - these are intentional cancellations
+      if (err instanceof Error && err.name === "AbortError") {
+        return;
+      }
       console.error("Error fetching filings:", err);
       setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
-      setIsLoading(false);
+      // Only clear loading state if this request wasn't aborted
+      if (!abortController.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, [
     search,
@@ -355,6 +382,13 @@ export default function FilingsPage() {
 
   useEffect(() => {
     fetchFilings();
+
+    // Cleanup: abort any pending request when component unmounts or dependencies change
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [fetchFilings]);
 
   // Fetch saved filters on mount
