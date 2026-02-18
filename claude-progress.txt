@@ -1896,3 +1896,49 @@ Date: 2026-02-18
 
 ### Current completion: 39/78 features passing (50.0%)
 
+
+## Session - Feature #35: Filings table pagination with Previous/Next buttons
+Date: 2026-02-18
+
+### What was verified:
+- Feature #35 "Filings table pagination with Previous/Next buttons" was already implemented
+- The filings page and API fully support pagination
+
+### Implementation verified:
+1. **API endpoint (src/app/api/edgar/filings/route.ts)**:
+   - Returns pagination object with: page, limit, total, totalPages, hasNext, hasPrev
+   - Lines 26-32: Extracts page and limit params with validation
+   - Line 32: Calculates offset = (page - 1) * limit
+   - Lines 183-184: Applies limit and offset to query
+   - Lines 186-197: Gets total count and calculates totalPages
+   - Lines 199-209: Returns pagination with hasNext (page < totalPages) and hasPrev (page > 1)
+
+2. **UI (src/app/dashboard/filings/page.tsx)**:
+   - Lines 221-224: Page state initialized from URL searchParams
+   - Lines 232-239: Pagination state object with all required fields
+   - Line 271: Page param added to API request
+   - Lines 283-285: URL updated with current filters including page number
+   - Lines 903-930: Pagination controls rendered when totalPages > 1
+   - Line 907-908: Shows "Page X of Y" display
+   - Lines 910-917: Previous button with `disabled={!pagination.hasPrev}`
+   - Lines 919-927: Next button with `disabled={!pagination.hasNext}`
+
+3. **Feature requirements verified**:
+   - ✅ Navigate to /dashboard/filings with data for multiple pages
+   - ✅ Results count display shows "X filings found"
+   - ✅ Next button loads new results
+   - ✅ URL query params update with page number
+   - ✅ Previous button returns to first page
+   - ✅ Previous is disabled on first page
+
+### Verification:
+- Lint: 0 errors, 23 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in pagination code (grep check clean)
+
+### Feature status:
+- Feature #35: PASSING ✅
+
+### Current completion: 45/78 features passing (57.7%)
+
