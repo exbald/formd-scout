@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sql } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 // Allow up to 5 minutes for large backfill ingestions (requires Vercel Pro+)
 export const maxDuration = 300;
@@ -134,8 +134,7 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Insert into database with deduplication
-        // Use returning() to detect if the insert actually happened
+        // Insert into database — empty returning() means conflict (duplicate)
         const result = await db
           .insert(formDFilings)
           .values({
@@ -166,24 +165,27 @@ export async function POST(req: NextRequest) {
             moreThanOneYear: parsed.moreThanOneYear,
             federalExemptions: parsed.federalExemptions,
           })
-          .onConflictDoUpdate({
-            target: formDFilings.accessionNumber,
-            set: {
-              industryGroup: sql`CASE WHEN excluded.industry_group IS NOT NULL THEN excluded.industry_group ELSE ${formDFilings.industryGroup} END`,
-            },
-          })
-          .returning({
-            id: formDFilings.id,
-            // xmax = 0 on a fresh insert, non-zero on an update
-            isUpdate: sql<boolean>`(xmax <> 0)`,
-          });
+          .onConflictDoNothing({ target: formDFilings.accessionNumber })
+          .returning({ id: formDFilings.id });
 
-        if (result[0]?.isUpdate) {
+        if (result.length === 0) {
+          // Conflict — backfill industryGroup if parser found one and existing is null
+          if (parsed.industryGroup) {
+            await db
+              .update(formDFilings)
+              .set({ industryGroup: parsed.industryGroup })
+              .where(
+                and(
+                  eq(formDFilings.accessionNumber, parsed.accessionNumber),
+                  isNull(formDFilings.industryGroup)
+                )
+              );
+          }
           skipped++;
           details.push({
             accessionNumber: parsed.accessionNumber,
             status: "skipped",
-            error: "Duplicate accession number (industry group updated if applicable)",
+            error: "Duplicate accession number",
           });
         } else {
           ingested++;
