@@ -114,19 +114,19 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-4 sm:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-3xl font-bold">SEC Form D Monitor</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold">SEC Form D Monitor</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Monitor private funding filings from SEC EDGAR
           </p>
         </div>
       </div>
 
-      {/* Stats Cards Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats Cards Row - responsive: 1 col mobile, 2 cols tablet, 4 cols desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {/* Today's Filings Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -213,8 +213,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Charts Row - stack on mobile, side-by-side on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Filings Over Time</CardTitle>
@@ -346,7 +346,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent High-Relevance Filings Table */}
-      <div className="mt-8">
+      <div className="mt-6 sm:mt-8">
         <Card>
           <CardHeader>
             <CardTitle>Recent High-Relevance Filings</CardTitle>
@@ -360,62 +360,103 @@ export default function DashboardPage() {
                 <Skeleton className="h-[200px] w-full" />
               </div>
             ) : highRelevanceFilings.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-6 sm:p-8 text-center text-muted-foreground">
                 No high-relevance filings found. Filings with AI enrichment scores of 60+
                 will appear here.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-4 font-medium">Company Name</th>
-                      <th className="text-left p-4 font-medium">Filing Date</th>
-                      <th className="text-left p-4 font-medium">Offering Amount</th>
-                      <th className="text-left p-4 font-medium">Relevance</th>
-                      <th className="w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {highRelevanceFilings.map((filing) => (
-                      <tr
-                        key={filing.id}
-                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
-                        onClick={() =>
-                          router.push(`/dashboard/filings/${filing.id}`)
-                        }
-                      >
-                        <td className="p-4">
-                          <span className="font-medium">{filing.companyName}</span>
-                        </td>
-                        <td className="p-4 text-muted-foreground">
-                          {filing.filingDate}
-                        </td>
-                        <td className="p-4">
+              <>
+                {/* Desktop Table View - hidden on mobile */}
+                <div className="hidden sm:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-4 font-medium">Company Name</th>
+                        <th className="text-left p-4 font-medium">Filing Date</th>
+                        <th className="text-left p-4 font-medium">Offering Amount</th>
+                        <th className="text-left p-4 font-medium">Relevance</th>
+                        <th className="w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {highRelevanceFilings.map((filing) => (
+                        <tr
+                          key={filing.id}
+                          className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                          onClick={() =>
+                            router.push(`/dashboard/filings/${filing.id}`)
+                          }
+                        >
+                          <td className="p-4">
+                            <span className="font-medium">{filing.companyName}</span>
+                          </td>
+                          <td className="p-4 text-muted-foreground">
+                            {filing.filingDate}
+                          </td>
+                          <td className="p-4">
+                            {filing.totalOffering !== null
+                              ? formatDollarAmount(filing.totalOffering)
+                              : "N/A"}
+                          </td>
+                          <td className="p-4">
+                            {filing.relevanceScore !== null ? (
+                              <Badge
+                                variant={getRelevanceBadgeVariant(filing.relevanceScore)}
+                                className={getRelevanceColor(filing.relevanceScore)}
+                              >
+                                {filing.relevanceScore}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="p-4">
+                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View - visible only on mobile */}
+                <div className="sm:hidden divide-y">
+                  {highRelevanceFilings.map((filing) => (
+                    <div
+                      key={filing.id}
+                      className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() =>
+                        router.push(`/dashboard/filings/${filing.id}`)
+                      }
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{filing.companyName}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {filing.filingDate}
+                          </p>
+                        </div>
+                        {filing.relevanceScore !== null && (
+                          <Badge
+                            variant={getRelevanceBadgeVariant(filing.relevanceScore)}
+                            className={getRelevanceColor(filing.relevanceScore)}
+                          >
+                            {filing.relevanceScore}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
                           {filing.totalOffering !== null
                             ? formatDollarAmount(filing.totalOffering)
                             : "N/A"}
-                        </td>
-                        <td className="p-4">
-                          {filing.relevanceScore !== null ? (
-                            <Badge
-                              variant={getRelevanceBadgeVariant(filing.relevanceScore)}
-                              className={getRelevanceColor(filing.relevanceScore)}
-                            >
-                              {filing.relevanceScore}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                        </span>
+                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
