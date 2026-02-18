@@ -346,6 +346,58 @@ export default function FilingsPage() {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [savedFiltersOpen]);
 
+  // Sync filter state from URL searchParams when navigating back to this page
+  // This ensures filters are preserved when returning from detail page
+  useEffect(() => {
+    // Read current URL params
+    const urlSearch = searchParams.get("search") || "";
+    const urlStartDate = searchParams.get("startDate") || "";
+    const urlEndDate = searchParams.get("endDate") || "";
+    const urlMinOffering = searchParams.get("minOffering") || "";
+    const urlMaxOffering = searchParams.get("maxOffering") || "";
+    const urlIndustryGroup = searchParams.get("industryGroup")?.split(",").filter(Boolean) || [];
+    const urlState = searchParams.get("state")?.split(",").filter(Boolean) || [];
+    const urlMinRelevance = searchParams.get("minRelevance") || "";
+    const urlIsAmendment = searchParams.get("isAmendment") || "";
+    const urlYetToOccur = searchParams.get("yetToOccur") === "true";
+    const urlPage = parseInt(searchParams.get("page") || "1", 10);
+    const urlSortBy = searchParams.get("sortBy") || "filingDate";
+    const urlSortOrder = searchParams.get("sortOrder") || "desc";
+
+    // Check if any filter differs from URL (indicating we navigated back)
+    const needsSync =
+      search !== urlSearch ||
+      startDate !== urlStartDate ||
+      endDate !== urlEndDate ||
+      minOffering !== urlMinOffering ||
+      maxOffering !== urlMaxOffering ||
+      JSON.stringify(selectedIndustries) !== JSON.stringify(urlIndustryGroup) ||
+      JSON.stringify(selectedStates) !== JSON.stringify(urlState) ||
+      minRelevance !== urlMinRelevance ||
+      isAmendment !== urlIsAmendment ||
+      yetToOccur !== urlYetToOccur ||
+      page !== urlPage ||
+      sortBy !== urlSortBy ||
+      sortOrder !== urlSortOrder;
+
+    if (needsSync) {
+      setSearch(urlSearch);
+      setStartDate(urlStartDate);
+      setEndDate(urlEndDate);
+      setMinOffering(urlMinOffering);
+      setMaxOffering(urlMaxOffering);
+      setSelectedIndustries(urlIndustryGroup);
+      setSelectedStates(urlState);
+      setMinRelevance(urlMinRelevance);
+      setIsAmendment(urlIsAmendment);
+      setYetToOccur(urlYetToOccur);
+      setPage(urlPage);
+      setSortBy(urlSortBy);
+      setSortOrder(urlSortOrder);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {

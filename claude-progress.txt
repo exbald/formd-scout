@@ -2241,3 +2241,50 @@ Date: 2026-02-18
 - Feature #51: PASSING ✅
 
 ### Current completion: 51/78 features passing (65.4%)
+
+---
+
+## Session - Feature #52: Filter state preserved when navigating to detail and back
+Date: 2026-02-18
+
+### What was accomplished:
+- Added a useEffect hook to sync filter state from URL searchParams when navigating back to the filings page
+- Ensures that filters (search, minRelevance, etc.) are preserved when navigating from detail page back to filings list
+
+### Implementation details:
+1. **Updated src/app/dashboard/filings/page.tsx**:
+   - Added new useEffect (lines 349-399) that watches searchParams
+   - Reads all filter values from URL params
+   - Compares with current state to detect if sync is needed
+   - Only updates state if there's a mismatch (prevents unnecessary re-renders)
+   - Syncs all filter types: search, startDate, endDate, minOffering, maxOffering, selectedIndustries, selectedStates, minRelevance, isAmendment, yetToOccur, page, sortBy, sortOrder
+
+### How it works:
+1. User applies filters on filings page → URL updates with query params
+2. User clicks on a filing row → navigates to /dashboard/filings/{id}
+3. User clicks back button → browser navigates back to URL with query params
+4. The filings page re-renders with new searchParams object
+5. The sync useEffect detects the mismatch between state and URL params
+6. State is updated to match URL params
+7. fetchFilings is called with the restored filter state
+8. Filter inputs show the correct values and results are filtered
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Apply filters: search=test, minRelevance=50
+3. ✅ Click on a filing row to go to detail page
+4. ✅ Click back button or browser back
+5. ✅ Search field still shows test and minRelevance still shows 50
+6. ✅ Filtered results are still displayed
+
+### Verification:
+- Lint: 0 errors, pre-existing import order warnings only
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #52: PASSING ✅
+
+### Current completion: 52/78 features passing (66.7%)
+
