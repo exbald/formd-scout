@@ -1,3 +1,36 @@
+## Session 40 - Feature #32: Dashboard home shows recent high-relevance filings table
+Date: 2026-02-18
+
+### What was accomplished:
+- Verified dashboard page at /dashboard has a "Recent High-Relevance Filings" table section
+- Implementation fetches top 10 filings with relevance score >= 60 via API
+- Table columns: Company Name, Filing Date, Offering Amount, Relevance Score
+- Rows are clickable and navigate to filing detail page
+- Empty state handled gracefully with informative message
+- Relevance badges are color-coded (green for 70+, yellow for 40-69)
+
+### Code verification (all checks passed):
+- ✓ Table section exists (lines 334-408 in src/app/dashboard/page.tsx)
+- ✓ Fetches from /api/edgar/filings?minRelevance=60&sortBy=relevanceScore&sortOrder=desc&limit=10
+- ✓ Table columns include company name, filing date, offering amount, relevance score
+- ✓ Empty state: "No high-relevance filings found..."
+- ✓ Loading state with Skeleton component
+- ✓ Row click navigates to /dashboard/filings/[id]
+- ✓ Dollar formatting via formatDollarAmount() utility
+
+### Verification:
+- Lint: 0 errors, pre-existing warnings only (import order)
+- TypeScript: passes cleanly
+- Build: npm run build:ci succeeds with all routes compiled
+- Mock data check: No mock data patterns found (grep clean)
+
+### Feature status:
+- Feature #32: PASSING ✅
+
+### Current completion: 42/78 features passing (53.8%)
+
+---
+
 ## Session 39 - Feature #21: Enrichment API enriches a single filing by filingId
 Date: 2026-02-17
 
