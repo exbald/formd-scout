@@ -18,7 +18,9 @@ import {
   ArrowDown,
   Trash2,
   Bookmark,
+  Copy,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -473,6 +475,92 @@ export default function FilingsPage() {
     }
   };
 
+  // Copy Summary - formats top 10 results as text for clipboard
+  const handleCopySummary = async () => {
+    try {
+      // Fetch top 10 results with current filters
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      if (minOffering) params.set("minOffering", minOffering);
+      if (maxOffering) params.set("maxOffering", maxOffering);
+      if (selectedIndustries.length > 0)
+        params.set("industryGroup", selectedIndustries.join(","));
+      if (selectedStates.length > 0)
+        params.set("state", selectedStates.join(","));
+      if (minRelevance) params.set("minRelevance", minRelevance);
+      if (isAmendment) params.set("isAmendment", isAmendment);
+      if (yetToOccur) params.set("yetToOccur", "true");
+      params.set("sortBy", sortBy);
+      params.set("sortOrder", sortOrder);
+      params.set("limit", "10");
+
+      const response = await fetch(`/api/edgar/filings?${params.toString()}`);
+      if (!response.ok) throw new Error("Failed to fetch filings");
+
+      const data: FilingsResponse = await response.json();
+      const topFilings = data.filings.slice(0, 10);
+
+      if (topFilings.length === 0) {
+        toast.error("No filings to copy");
+        return;
+      }
+
+      // Format as readable text
+      const lines = [
+        `Form D Filings Summary - Top ${topFilings.length} Results`,
+        `Generated: ${new Date().toLocaleDateString()}`,
+        "=".repeat(50),
+        "",
+      ];
+
+      topFilings.forEach((filing, index) => {
+        lines.push(`${index + 1}. ${filing.companyName}`);
+        lines.push(`   Filing Date: ${filing.filingDate}`);
+        lines.push(`   Offering: ${formatCurrency(filing.totalOffering)}`);
+        lines.push(`   Industry: ${filing.industryGroup || "N/A"}`);
+        lines.push(`   State: ${filing.issuerState || "N/A"}`);
+        lines.push(`   Relevance: ${filing.relevanceScore !== null ? filing.relevanceScore : "N/A"}`);
+        lines.push(`   Status: ${filing.isAmendment ? "Amendment" : "New"}`);
+        lines.push("");
+      });
+
+      // Add filter summary
+      const activeFilters: string[] = [];
+      if (search) activeFilters.push(`Search: "${search}"`);
+      if (startDate || endDate) {
+        activeFilters.push(`Date Range: ${startDate || "any"} to ${endDate || "any"}`);
+      }
+      if (minOffering || maxOffering) {
+        activeFilters.push(`Offering: ${minOffering ? formatCurrency(parseInt(minOffering)) : "any"} - ${maxOffering ? formatCurrency(parseInt(maxOffering)) : "any"}`);
+      }
+      if (selectedIndustries.length > 0) {
+        activeFilters.push(`Industries: ${selectedIndustries.join(", ")}`);
+      }
+      if (selectedStates.length > 0) {
+        activeFilters.push(`States: ${selectedStates.join(", ")}`);
+      }
+      if (minRelevance) {
+        activeFilters.push(`Min Relevance: ${minRelevance}`);
+      }
+
+      if (activeFilters.length > 0) {
+        lines.push("-".repeat(50));
+        lines.push("Active Filters:");
+        activeFilters.forEach(f => lines.push(`  • ${f}`));
+      }
+
+      const summaryText = lines.join("\n");
+
+      await navigator.clipboard.writeText(summaryText);
+      toast.success(`Copied ${topFilings.length} filings to clipboard`);
+    } catch (error) {
+      console.error("Error copying summary:", error);
+      toast.error("Failed to copy summary");
+    }
+  };
+
   const hasActiveFilters =
     search ||
     startDate ||
@@ -728,6 +816,15 @@ export default function FilingsPage() {
             >
               <Download className="h-4 w-4 mr-2" />
               Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopySummary}
+              disabled={isLoading || filings.length === 0}
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Summary
             </Button>
             {/* Success feedback */}
             {saveSuccess && (
