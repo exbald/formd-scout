@@ -1,3 +1,44 @@
+## Session - Feature #56: Double-clicking Export CSV does not trigger multiple downloads
+Date: 2026-02-18
+
+### What was accomplished:
+- Implemented idempotency for the Export CSV button to prevent multiple downloads from rapid clicks
+- Added loading state with visual feedback during export
+
+### Implementation details:
+1. **Added `isExporting` state variable (line 246)**:
+   - `const [isExporting, setIsExporting] = useState(false);`
+   - Tracks whether an export is currently in progress
+
+2. **Updated `handleExportCsv` function (lines 505-545)**:
+   - Early return if already exporting: `if (isExporting) return;`
+   - Sets `isExporting` to true before starting the fetch
+   - Uses `finally` block to always reset `isExporting` to false after completion
+
+3. **Updated Export CSV button (lines 881-893)**:
+   - Button is disabled during export: `disabled={isExporting}`
+   - Shows spinning Loader2 icon when exporting
+   - Text changes from "Export CSV" to "Exporting..."
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Rapidly double-click the Export CSV button
+3. ✅ Only one download is triggered (early return prevents duplicate)
+4. ✅ Button shows loading/disabled state during export
+
+### Verification:
+- Lint: 0 errors, pre-existing import order warnings only
+- TypeScript: passes cleanly
+- Build: `npm run build:ci` succeeds with all routes
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #56: PASSING ✅
+
+### Current completion: 56/78 features passing (71.8%)
+
+---
+
 ## Session - Feature #53: Page refresh preserves filter state via URL params
 Date: 2026-02-18
 
