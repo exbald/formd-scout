@@ -34,6 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatDollarAmount } from "@/lib/format-currency";
+import { formatDate } from "@/lib/format-date";
 
 interface Filing {
   id: string;
@@ -234,7 +235,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Back button */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <Button variant="ghost" asChild>
           <Link
             href="/dashboard/filings"
@@ -253,28 +254,28 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
       </div>
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-8 flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Building2 className="h-8 w-8" />
-            {filing.companyName}
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-6 sm:mb-8 gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-start sm:items-center gap-2 sm:gap-3">
+            <Building2 className="h-6 w-6 sm:h-8 sm:w-8 shrink-0 mt-0.5 sm:mt-0" />
+            <span className="break-words">{filing.companyName}</span>
           </h1>
-          <p className="text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+          <p className="text-muted-foreground mt-2 flex items-center gap-2 flex-wrap text-sm sm:text-base">
             <Calendar className="h-4 w-4" />
-            Filed: {filing.filingDate}
+            Filed: {formatDate(filing.filingDate)}
             {filing.isAmendment && (
-              <Badge variant="secondary" className="ml-2">
+              <Badge variant="secondary" className="ml-1">
                 Amendment
               </Badge>
             )}
             {filing.yetToOccur && (
-              <Badge variant="outline" className="ml-2">
+              <Badge variant="outline" className="ml-1">
                 First Sale Pending
               </Badge>
             )}
           </p>
         </div>
-        <Button variant="outline" asChild>
+        <Button variant="outline" asChild className="shrink-0">
           <a
             href={filing.filingUrl || `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=D&CIK=${filing.cik}`}
             target="_blank"
@@ -286,7 +287,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Filing Data */}
         <Card>
           <CardHeader>
@@ -424,7 +425,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
               )}
               {filing.firstSaleDate && (
                 <p>
-                  <strong>First Sale Date:</strong> {filing.firstSaleDate}
+                  <strong>First Sale Date:</strong> {formatDate(filing.firstSaleDate)}
                 </p>
               )}
             </div>

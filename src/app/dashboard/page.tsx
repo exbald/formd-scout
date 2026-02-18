@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Calendar, TrendingUp, DollarSign, ExternalLink } from "lucide-react";
 import { formatDollarAmount } from "@/lib/format-currency";
+import { formatDate } from "@/lib/format-date";
 import {
   BarChart,
   Bar,

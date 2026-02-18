@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDollarAmount } from "@/lib/format-currency";
+import { formatDate } from "@/lib/format-date";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -616,7 +617,7 @@ export default function FilingsPage() {
 
       topFilings.forEach((filing, index) => {
         lines.push(`${index + 1}. ${filing.companyName}`);
-        lines.push(`   Filing Date: ${filing.filingDate}`);
+        lines.push(`   Filing Date: ${formatDate(filing.filingDate)}`);
         lines.push(`   Offering: ${formatCurrency(filing.totalOffering)}`);
         lines.push(`   Industry: ${filing.industryGroup || "N/A"}`);
         lines.push(`   State: ${filing.issuerState || "N/A"}`);
@@ -1084,7 +1085,7 @@ export default function FilingsPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                       <div className="text-muted-foreground">
-                        <span className="text-xs">Date:</span> {filing.filingDate}
+                        <span className="text-xs">Date:</span> {formatDate(filing.filingDate)}
                       </div>
                       <div className="text-muted-foreground">
                         <span className="text-xs">Offering:</span> {formatCurrency(filing.totalOffering)}
@@ -1188,7 +1189,7 @@ export default function FilingsPage() {
                           <span className="font-medium">{filing.companyName}</span>
                         </td>
                         <td className="p-4 text-muted-foreground">
-                          {filing.filingDate}
+                          {formatDate(filing.filingDate)}
                         </td>
                         <td className="p-4">
                           {formatCurrency(filing.totalOffering)}
