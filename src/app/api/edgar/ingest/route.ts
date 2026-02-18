@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sql } from "drizzle-orm";
+
+// Allow up to 5 minutes for large backfill ingestions (requires Vercel Pro+)
+export const maxDuration = 300;
 import { db } from "@/lib/db";
 import { formDFilings } from "@/lib/schema";
 import {
@@ -162,16 +166,24 @@ export async function POST(req: NextRequest) {
             moreThanOneYear: parsed.moreThanOneYear,
             federalExemptions: parsed.federalExemptions,
           })
-          .onConflictDoNothing({ target: formDFilings.accessionNumber })
-          .returning({ id: formDFilings.id });
+          .onConflictDoUpdate({
+            target: formDFilings.accessionNumber,
+            set: {
+              industryGroup: sql`CASE WHEN excluded.industry_group IS NOT NULL THEN excluded.industry_group ELSE ${formDFilings.industryGroup} END`,
+            },
+          })
+          .returning({
+            id: formDFilings.id,
+            // xmax = 0 on a fresh insert, non-zero on an update
+            isUpdate: sql<boolean>`(xmax <> 0)`,
+          });
 
-        // If returning() returns empty array, the insert was skipped due to conflict
-        if (result.length === 0) {
+        if (result[0]?.isUpdate) {
           skipped++;
           details.push({
             accessionNumber: parsed.accessionNumber,
             status: "skipped",
-            error: "Duplicate accession number",
+            error: "Duplicate accession number (industry group updated if applicable)",
           });
         } else {
           ingested++;

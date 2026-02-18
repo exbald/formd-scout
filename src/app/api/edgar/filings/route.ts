@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
   const isAmendment = searchParams.get("isAmendment");
   const yetToOccur = searchParams.get("yetToOccur");
   const search = searchParams.get("search");
+  const minHeadcount = searchParams.get("minHeadcount");
 
   // Sort params
   const sortBy = searchParams.get("sortBy") || "filingDate";
@@ -110,6 +111,11 @@ export async function GET(req: NextRequest) {
   if (yetToOccur === "true") {
     conditions.push(eq(formDFilings.yetToOccur, true));
   }
+  if (minHeadcount) {
+    conditions.push(
+      sql`${filingEnrichments.estimatedHeadcount} >= ${parseInt(minHeadcount, 10)}`
+    );
+  }
   if (search?.trim()) {
     conditions.push(ilike(formDFilings.companyName, `%${search.trim()}%`));
   }
@@ -124,6 +130,7 @@ export async function GET(req: NextRequest) {
     industryGroup: sql`${formDFilings.industryGroup}`,
     issuerState: sql`${formDFilings.issuerState}`,
     relevanceScore: sql`${filingEnrichments.relevanceScore}`,
+    estimatedHeadcount: sql`${filingEnrichments.estimatedHeadcount}`,
   };
   const sortColumn = sortColumnMap[sortBy] || sql`${formDFilings.filingDate}`;
   const orderExpr =

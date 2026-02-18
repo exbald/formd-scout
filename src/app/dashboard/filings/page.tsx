@@ -24,6 +24,7 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDollarAmount } from "@/lib/format-currency";
@@ -129,6 +130,7 @@ interface Filing {
   issuerState: string | null;
   isAmendment: boolean;
   relevanceScore: number | null;
+  estimatedHeadcount: number | null;
 }
 
 interface FilingsResponse {
@@ -172,7 +174,7 @@ const getRelevanceBadgeClass = (score: number | null): string => {
 };
 
 // Sortable column type
-type SortableColumn = "companyName" | "filingDate" | "totalOffering" | "industryGroup" | "issuerState" | "relevanceScore";
+type SortableColumn = "companyName" | "filingDate" | "totalOffering" | "industryGroup" | "issuerState" | "relevanceScore" | "estimatedHeadcount";
 
 // Sort indicator component
 const SortIndicator = ({ column, currentSortBy, currentSortOrder }: { column: SortableColumn; currentSortBy: string; currentSortOrder: string }) => {
@@ -211,6 +213,9 @@ export default function FilingsPage() {
   const [minRelevance, setMinRelevance] = useState(
     searchParams.get("minRelevance") || ""
   );
+  const [minHeadcount, setMinHeadcount] = useState(
+    searchParams.get("minHeadcount") || ""
+  );
   const [isAmendment, setIsAmendment] = useState(
     searchParams.get("isAmendment") || "all"
   );
@@ -247,6 +252,7 @@ export default function FilingsPage() {
 
   // Export state (prevents double-click multiple downloads)
   const [isExporting, setIsExporting] = useState(false);
+  const [isEnriching, setIsEnriching] = useState(false);
 
   // Saved filters state
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>([]);
@@ -314,6 +320,7 @@ export default function FilingsPage() {
       if (selectedStates.length > 0)
         params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
+      if (minHeadcount) params.set("minHeadcount", minHeadcount);
       if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
       params.set("page", page.toString());
@@ -371,6 +378,7 @@ export default function FilingsPage() {
     selectedIndustries,
     selectedStates,
     minRelevance,
+    minHeadcount,
     isAmendment,
     yetToOccur,
     page,
@@ -431,6 +439,7 @@ export default function FilingsPage() {
     const urlIndustryGroup = searchParams.get("industryGroup")?.split(",").filter(Boolean) || [];
     const urlState = searchParams.get("state")?.split(",").filter(Boolean) || [];
     const urlMinRelevance = searchParams.get("minRelevance") || "";
+    const urlMinHeadcount = searchParams.get("minHeadcount") || "";
     const urlIsAmendment = searchParams.get("isAmendment") || "all";
     const urlYetToOccur = searchParams.get("yetToOccur") === "true";
     const urlPage = parseInt(searchParams.get("page") || "1", 10);
@@ -447,6 +456,7 @@ export default function FilingsPage() {
       JSON.stringify(selectedIndustries) !== JSON.stringify(urlIndustryGroup) ||
       JSON.stringify(selectedStates) !== JSON.stringify(urlState) ||
       minRelevance !== urlMinRelevance ||
+      minHeadcount !== urlMinHeadcount ||
       isAmendment !== urlIsAmendment ||
       yetToOccur !== urlYetToOccur ||
       page !== urlPage ||
@@ -462,6 +472,7 @@ export default function FilingsPage() {
       setSelectedIndustries(urlIndustryGroup);
       setSelectedStates(urlState);
       setMinRelevance(urlMinRelevance);
+      setMinHeadcount(urlMinHeadcount);
       setIsAmendment(urlIsAmendment);
       setYetToOccur(urlYetToOccur);
       setPage(urlPage);
@@ -490,6 +501,7 @@ export default function FilingsPage() {
     setSelectedIndustries([]);
     setSelectedStates([]);
     setMinRelevance("");
+    setMinHeadcount("");
     setIsAmendment("");
     setYetToOccur(false);
     setPage(1);
@@ -725,6 +737,26 @@ export default function FilingsPage() {
     }
   };
 
+  const handleEnrichAll = async () => {
+    if (isEnriching) return;
+    setIsEnriching(true);
+    try {
+      const response = await fetch("/api/edgar/enrich-batch", { method: "POST" });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to enrich filings");
+      }
+      const data = await response.json();
+      toast.success(`Enriched ${data.enriched} filing${data.enriched !== 1 ? "s" : ""}. ${data.remaining} remaining.`);
+      fetchFilings();
+    } catch (error) {
+      console.error("Error enriching filings:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to enrich filings");
+    } finally {
+      setIsEnriching(false);
+    }
+  };
+
   const hasActiveFilters =
     search ||
     startDate ||
@@ -734,6 +766,7 @@ export default function FilingsPage() {
     selectedIndustries.length > 0 ||
     selectedStates.length > 0 ||
     minRelevance ||
+    minHeadcount ||
     (isAmendment && isAmendment !== "all") ||
     yetToOccur;
 
@@ -921,6 +954,19 @@ export default function FilingsPage() {
               />
             </div>
 
+            {/* Min Head Count */}
+            <div className="space-y-2">
+              <Label htmlFor="minHeadcount">Min Head Count</Label>
+              <Input
+                id="minHeadcount"
+                type="number"
+                min="1"
+                placeholder="Any"
+                value={minHeadcount}
+                onChange={(e) => setMinHeadcount(e.target.value)}
+              />
+            </div>
+
             {/* Amendment Toggle */}
             <div className="space-y-2">
               <Label htmlFor="filing-type">Filing Type</Label>
@@ -1042,6 +1088,21 @@ export default function FilingsPage() {
               <span className="hidden sm:inline">Copy Summary</span>
               <span className="sm:hidden">Copy</span>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnrichAll}
+              disabled={isEnriching}
+              className="shrink-0"
+            >
+              {isEnriching ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              <span className="hidden sm:inline">{isEnriching ? "Enriching..." : "Enrich All"}</span>
+              <span className="sm:hidden">Enrich</span>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -1066,6 +1127,7 @@ export default function FilingsPage() {
               <SelectItem value="companyName">Company Name</SelectItem>
               <SelectItem value="totalOffering">Offering Amount</SelectItem>
               <SelectItem value="relevanceScore">Relevance</SelectItem>
+              <SelectItem value="estimatedHeadcount">Head Count</SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -1172,6 +1234,11 @@ export default function FilingsPage() {
                       <div className="text-muted-foreground">
                         <span className="text-xs">State:</span> {filing.issuerState || "N/A"}
                       </div>
+                      {filing.estimatedHeadcount !== null && (
+                        <div className="text-muted-foreground">
+                          <span className="text-xs">Head Count:</span> {filing.estimatedHeadcount.toLocaleString()}
+                        </div>
+                      )}
                     </div>
                   </button>
                 ))}
@@ -1239,6 +1306,17 @@ export default function FilingsPage() {
                       </th>
                       <th
                         scope="col"
+                        aria-sort={sortBy === "estimatedHeadcount" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("estimatedHeadcount")}
+                      >
+                        <div className="flex items-center">
+                          Head Count
+                          <SortIndicator column="estimatedHeadcount" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
                         aria-sort={sortBy === "relevanceScore" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
                         className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
                         onClick={() => handleSort("relevanceScore")}
@@ -1282,6 +1360,9 @@ export default function FilingsPage() {
                         </td>
                         <td className="p-4 text-muted-foreground">
                           {filing.issuerState || "N/A"}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {filing.estimatedHeadcount?.toLocaleString() ?? "—"}
                         </td>
                         <td className="p-4">
                           {filing.relevanceScore !== null ? (

@@ -224,7 +224,9 @@ export function parseFormDXml(
     const issuerPhone = extractString(primaryIssuer, "issuerPhoneNumber");
 
     // Extract offering data
-    const industryGroup = extractString(offeringData, "industryGroup");
+    const industryGroup =
+      extractString(offeringData, "industryGroup", "industryGroupType") ||
+      extractString(offeringData, "industryGroup");
 
     const revenueRange = extractString(offeringData, "issuerSize", "revenueRange");
 

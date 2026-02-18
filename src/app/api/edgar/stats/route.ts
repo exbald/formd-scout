@@ -97,7 +97,7 @@ export async function GET() {
         })
         .from(filingEnrichments)
         .where(
-          sql`${filingEnrichments.relevanceScore} >= 60`
+          sql`${filingEnrichments.relevanceScore} >= 30`
         ),
 
       // Average offering amount (across all filings with non-null totalOffering)

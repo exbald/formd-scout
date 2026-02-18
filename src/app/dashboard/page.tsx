@@ -66,7 +66,7 @@ export default function DashboardPage() {
         // Fetch stats and high-relevance filings in parallel - only 2 API calls
         const [statsResponse, filingsResponse] = await Promise.all([
           fetch("/api/edgar/stats"),
-          fetch("/api/edgar/filings?minRelevance=60&sortBy=relevanceScore&sortOrder=desc&limit=10"),
+          fetch("/api/edgar/filings?minRelevance=20&sortBy=relevanceScore&sortOrder=desc&limit=10"),
         ]);
 
         if (!statsResponse.ok) {
@@ -181,7 +181,7 @@ export default function DashboardPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              Score 60+
+              Score 30+
             </p>
           </CardContent>
         </Card>
@@ -228,11 +228,11 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-[250px] w-full">
+              <div className="h-[250px] w-full overflow-visible">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={stats.dailyCounts}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 20 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis
@@ -250,6 +250,7 @@ export default function DashboardPage() {
                       className="text-muted-foreground"
                     />
                     <Tooltip
+                      wrapperStyle={{ zIndex: 1000 }}
                       labelFormatter={(label) => {
                         const d = new Date(label);
                         return d.toLocaleDateString("en-US", {
@@ -346,7 +347,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Recent High-Relevance Filings</CardTitle>
             <CardDescription>
-              Top 10 filings with relevance score of 60 or higher
+              Top 10 filings with relevance score of 20 or higher
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -356,7 +357,7 @@ export default function DashboardPage() {
               </div>
             ) : highRelevanceFilings.length === 0 ? (
               <div className="p-6 sm:p-8 text-center text-muted-foreground">
-                No high-relevance filings found. Filings with AI enrichment scores of 60+
+                No high-relevance filings found. Filings with AI enrichment scores of 20+
                 will appear here.
               </div>
             ) : (
