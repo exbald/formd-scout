@@ -1,3 +1,57 @@
+## Session - Feature #72: Date range filter handles edge cases
+Date: 2026-02-18
+
+### What was implemented:
+- Added client-side validation for date range edge cases
+- Added visual feedback (red borders) when date range is invalid
+- Added clear error message display for reversed date ranges
+- Same-day date ranges already work correctly via API (gte + lte)
+
+### Implementation details:
+
+1. **Date Range Validation State (src/app/dashboard/filings/page.tsx)**:
+   - New state: `dateRangeError` for storing validation error message
+   - New function: `validateDateRange(start, end)` - checks if start > end
+
+2. **Validation Logic**:
+   - If startDate > endDate: Shows "Start date must be before or equal to end date"
+   - Validation runs before fetchFilings() executes
+   - If invalid, fetch is aborted and error message is displayed
+
+3. **UI Updates**:
+   - Both date inputs get `border-destructive` class when date range is invalid
+   - Error message displayed below date inputs with AlertCircle icon
+   - Error message spans both date columns for visibility
+   - handleClearFilters() now clears dateRangeError state
+
+4. **Same-Day Range Handling**:
+   - API uses `gte(startDate)` AND `lte(endDate)`
+   - When startDate = endDate = "2024-01-15", query becomes:
+     `filingDate >= '2024-01-15' AND filingDate <= '2024-01-15'`
+   - Correctly returns filings from that exact day
+
+5. **Very Old Date Handling**:
+   - PostgreSQL date type supports wide range of dates
+   - No error thrown for very old dates (e.g., "1900-01-01")
+   - Query simply returns no results if no matching data
+
+### Feature requirements verified:
+1. ✅ Apply date filter where startDate equals endDate - returns filings from that exact day
+2. ✅ Apply reversed date range (start > end) - shows validation error, no fetch
+3. ✅ Apply filter with very old startDate - no error, just no results
+
+### Verification:
+- Lint: 0 errors, 25 warnings (import order only)
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+
+### Feature status:
+- Feature #72: PASSING ✅
+
+### Current completion: 70/78 features passing (89.7%)
+
+---
+
 ## Session - Feature #71: Filing dates display correctly and sort across boundaries
 Date: 2026-02-18
 

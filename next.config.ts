@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Use webpack for builds (turbopack can have issues with some file systems)
+  experimental: {
+    turbo: undefined,
+  },
+
   // Image optimization configuration
   images: {
     remotePatterns: [

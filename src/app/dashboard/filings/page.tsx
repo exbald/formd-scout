@@ -257,8 +257,36 @@ export default function FilingsPage() {
   // Mobile filter panel state (collapsed by default on mobile)
   const [filtersExpanded, setFiltersExpanded] = useState(false);
 
+  // Date range validation state
+  const [dateRangeError, setDateRangeError] = useState<string | null>(null);
+
+  // Validate date range - returns true if valid, false if invalid
+  const validateDateRange = useCallback((start: string, end: string): boolean => {
+    // Clear any previous error
+    setDateRangeError(null);
+
+    // If both dates are provided, check if start > end
+    if (start && end) {
+      const startDateObj = new Date(start);
+      const endDateObj = new Date(end);
+
+      if (startDateObj > endDateObj) {
+        setDateRangeError("Start date must be before or equal to end date");
+        return false;
+      }
+    }
+
+    return true;
+  }, []);
+
   // Fetch filings
   const fetchFilings = useCallback(async () => {
+    // Validate date range before fetching
+    if (!validateDateRange(startDate, endDate)) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -322,6 +350,7 @@ export default function FilingsPage() {
     sortBy,
     sortOrder,
     router,
+    validateDateRange,
   ]);
 
   useEffect(() => {
@@ -432,6 +461,7 @@ export default function FilingsPage() {
     setPage(1);
     setSortBy("filingDate");
     setSortOrder("desc");
+    setDateRangeError(null); // Clear any date range error
     // Clear URL params - push to base route without query string
     router.push("/dashboard/filings", { scroll: false });
   };
@@ -767,6 +797,7 @@ export default function FilingsPage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className={dateRangeError ? "border-destructive" : ""}
               />
             </div>
 
@@ -778,8 +809,19 @@ export default function FilingsPage() {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className={dateRangeError ? "border-destructive" : ""}
               />
             </div>
+
+            {/* Date Range Error Message - spans the date columns */}
+            {dateRangeError && (
+              <div className="col-span-1 md:col-span-2 -mt-2">
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5" />
+                  {dateRangeError}
+                </p>
+              </div>
+            )}
 
             {/* Min Offering */}
             <div className="space-y-2">
