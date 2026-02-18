@@ -23,6 +23,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatDollarAmount } from "@/lib/format-currency";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -150,13 +151,10 @@ interface SavedFilter {
   createdAt: string;
 }
 
+// Use shared formatDollarAmount for consistent currency formatting
 const formatCurrency = (amount: number | null | undefined): string => {
-  if (!amount) return "N/A";
-  if (amount >= 1_000_000_000)
-    return `$${(amount / 1_000_000_000).toFixed(1)}B`;
-  if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000) return `$${(amount / 1_000).toFixed(1)}K`;
-  return `$${amount}`;
+  if (amount === null || amount === undefined) return "N/A";
+  return formatDollarAmount(amount);
 };
 
 const getRelevanceBadgeVariant = (

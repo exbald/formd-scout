@@ -225,11 +225,18 @@ export default function DashboardPage() {
           <CardContent>
             {loading ? (
               <Skeleton className="h-[250px] w-full" />
+            ) : !stats?.dailyCounts || stats.dailyCounts.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <Calendar className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p>No filing data available for the last 14 days</p>
+                </div>
+              </div>
             ) : (
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={stats?.dailyCounts ?? []}
+                    data={stats.dailyCounts}
                     margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -285,11 +292,18 @@ export default function DashboardPage() {
           <CardContent>
             {loading ? (
               <Skeleton className="h-[250px] w-full" />
+            ) : !stats?.topIndustries || stats.topIndustries.length === 0 ? (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <TrendingUp className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p>No industry data available yet</p>
+                </div>
+              </div>
             ) : (
               <div className="h-[250px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={stats?.topIndustries ?? []}
+                    data={stats.topIndustries}
                     layout="vertical"
                     margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
                   >

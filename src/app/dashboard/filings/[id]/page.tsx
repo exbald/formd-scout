@@ -79,14 +79,10 @@ interface FilingDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Use shared formatDollarAmount for consistent currency formatting
 const formatCurrency = (amount: string | number | null | undefined): string => {
-  if (!amount) return "N/A";
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(num)) return "N/A";
-  if (num >= 1_000_000_000) return `$${(num / 1_000_000_000).toFixed(1)}B`;
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `$${(num / 1_000).toFixed(1)}K`;
-  return `$${num.toFixed(0)}`;
+  if (amount === null || amount === undefined) return "N/A";
+  return formatDollarAmount(amount);
 };
 
 const getRelevanceColor = (score: number | null): string => {
