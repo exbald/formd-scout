@@ -19,6 +19,8 @@ import {
   Trash2,
   Bookmark,
   Copy,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -240,6 +242,7 @@ export default function FilingsPage() {
     hasPrev: false,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Save filter dialog state
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
