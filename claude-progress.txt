@@ -1,3 +1,43 @@
+## Session - Feature #76: Filtered CSV export only includes matching records
+Date: 2026-02-18
+
+### What was verified:
+- Feature #76 "Filtered CSV export only includes matching records" was already correctly implemented
+- Both frontend and backend work together to ensure CSV exports respect current filter settings
+
+### Implementation verified:
+
+1. **Frontend (src/app/dashboard/filings/page.tsx, lines 561-606)**:
+   - `handleExportCsv` function builds URLSearchParams with all current filters
+   - Passes: `search`, `startDate`, `endDate`, `minOffering`, `maxOffering`, `industryGroup`, `state`, `minRelevance`, `isAmendment`, `yetToOccur`
+   - Same filter parameters as `fetchFilings` for consistency
+
+2. **Backend (src/app/api/edgar/export/route.ts)**:
+   - Reads all filter parameters from query string (lines 115-124)
+   - Builds WHERE conditions using the same logic as the filings API (lines 127-188)
+   - Applies filters to the database query (line 238)
+   - Returns only matching records in the CSV stream
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Apply filter: state=NY (or any other filter)
+3. ✅ Click Export CSV - passes current filters to API
+4. ✅ API only returns rows matching the filter conditions
+5. ✅ Non-matching rows are excluded from the CSV export
+
+### Verification:
+- Lint: 0 errors, 25 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npx next build` succeeds with all routes
+- No mock data patterns found in codebase
+
+### Feature status:
+- Feature #76: PASSING ✅
+
+### Current completion: 74/78 features passing (94.9%)
+
+---
+
 ## Session - Feature #77: Rapid pagination clicks do not cause stale data display
 Date: 2026-02-18
 
