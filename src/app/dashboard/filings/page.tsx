@@ -258,7 +258,7 @@ export default function FilingsPage() {
     try {
       const params = new URLSearchParams();
 
-      if (search) params.set("search", search);
+      if (search.trim()) params.set("search", search.trim());
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (minOffering) params.set("minOffering", minOffering);
@@ -511,7 +511,7 @@ export default function FilingsPage() {
       const params = new URLSearchParams();
 
       // Apply current filters to export
-      if (search) params.set("search", search);
+      if (search.trim()) params.set("search", search.trim());
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (minOffering) params.set("minOffering", minOffering);
@@ -549,7 +549,7 @@ export default function FilingsPage() {
     try {
       // Fetch top 10 results with current filters
       const params = new URLSearchParams();
-      if (search) params.set("search", search);
+      if (search.trim()) params.set("search", search.trim());
       if (startDate) params.set("startDate", startDate);
       if (endDate) params.set("endDate", endDate);
       if (minOffering) params.set("minOffering", minOffering);
@@ -597,7 +597,7 @@ export default function FilingsPage() {
 
       // Add filter summary
       const activeFilters: string[] = [];
-      if (search) activeFilters.push(`Search: "${search}"`);
+      if (search.trim()) activeFilters.push(`Search: "${search.trim()}"`);
       if (startDate || endDate) {
         activeFilters.push(`Date Range: ${startDate || "any"} to ${endDate || "any"}`);
       }

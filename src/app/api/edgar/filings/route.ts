@@ -110,8 +110,8 @@ export async function GET(req: NextRequest) {
   if (yetToOccur === "true") {
     conditions.push(eq(formDFilings.yetToOccur, true));
   }
-  if (search) {
-    conditions.push(ilike(formDFilings.companyName, `%${search}%`));
+  if (search?.trim()) {
+    conditions.push(ilike(formDFilings.companyName, `%${search.trim()}%`));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
