@@ -22,6 +22,8 @@ import {
   AlertCircle,
   RefreshCw,
   Loader2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDollarAmount } from "@/lib/format-currency";
@@ -250,6 +252,9 @@ export default function FilingsPage() {
   const [savedFiltersOpen, setSavedFiltersOpen] = useState(false);
   const [deleteFilterId, setDeleteFilterId] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Mobile filter panel state (collapsed by default on mobile)
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   // Fetch filings
   const fetchFilings = useCallback(async () => {
@@ -682,15 +687,15 @@ export default function FilingsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <FileText className="h-8 w-8" />
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+            <FileText className="h-6 w-6 md:h-8 md:w-8" />
             SEC Form D Filings
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">
             Browse and filter Form D filings from the SEC EDGAR database
           </p>
         </div>
@@ -698,18 +703,37 @@ export default function FilingsPage() {
 
       {/* Filter Bar */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="font-medium">Filters</span>
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-2">
-                Active
-              </Badge>
-            )}
-          </div>
+        <CardContent className="p-3 md:p-4">
+          {/* Filter Header - always visible, clickable on mobile to expand */}
+          <button
+            className="flex items-center justify-between w-full md:w-auto md:pointer-events-none"
+            onClick={() => setFiltersExpanded(!filtersExpanded)}
+            aria-expanded={filtersExpanded}
+            aria-controls="filter-controls"
+            aria-label={`${filtersExpanded ? "Collapse" : "Expand"} filters`}
+          >
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
+              <span className="font-medium">Filters</span>
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-2">
+                  Active
+                </Badge>
+              )}
+            </div>
+            {/* Chevron indicator - only on mobile */}
+            <div className="md:hidden">
+              {filtersExpanded ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+          </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {/* Filter Grid - collapsible on mobile, always visible on desktop */}
+          <div id="filter-controls" className={`mt-4 ${filtersExpanded ? "block" : "hidden"} md:block`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {/* Search */}
             <div className="space-y-2">
               <Label htmlFor="search">Search</Label>
@@ -726,6 +750,7 @@ export default function FilingsPage() {
                   <button
                     onClick={() => setSearch("")}
                     className="absolute right-3 top-1/2 -translate-y-1/2"
+                    aria-label="Clear search"
                   >
                     <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                   </button>
@@ -781,23 +806,27 @@ export default function FilingsPage() {
 
             {/* Industry Multi-Select */}
             <div className="space-y-2">
-              <Label>Industry</Label>
+              <Label htmlFor="industry-select">Industry</Label>
               <MultiSelect
+                id="industry-select"
                 options={INDUSTRY_GROUPS}
                 selected={selectedIndustries}
                 onChange={setSelectedIndustries}
                 placeholder="Select industries..."
+                ariaLabel="Select industries"
               />
             </div>
 
             {/* State Multi-Select */}
             <div className="space-y-2">
-              <Label>State</Label>
+              <Label htmlFor="state-select">State</Label>
               <MultiSelect
+                id="state-select"
                 options={US_STATES}
                 selected={selectedStates}
                 onChange={setSelectedStates}
                 placeholder="Select states..."
+                ariaLabel="Select states"
               />
             </div>
 
@@ -817,9 +846,9 @@ export default function FilingsPage() {
 
             {/* Amendment Toggle */}
             <div className="space-y-2">
-              <Label>Filing Type</Label>
+              <Label htmlFor="filing-type">Filing Type</Label>
               <Select value={isAmendment} onValueChange={setIsAmendment}>
-                <SelectTrigger>
+                <SelectTrigger id="filing-type">
                   <SelectValue placeholder="All filings" />
                 </SelectTrigger>
                 <SelectContent>
@@ -844,38 +873,43 @@ export default function FilingsPage() {
               </div>
             </div>
           </div>
+          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t flex-wrap">
+          {/* Action Buttons - scrollable on mobile */}
+          <div className="flex items-center gap-2 mt-4 pt-4 border-t overflow-x-auto pb-1 -mb-1 md:flex-wrap md:overflow-visible md:pb-0 md:mb-0">
             {/* Saved Filters Dropdown */}
             {savedFilters.length > 0 && (
-              <div className="relative saved-filters-dropdown">
+              <div className="relative saved-filters-dropdown shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setSavedFiltersOpen(!savedFiltersOpen)}
+                  aria-expanded={savedFiltersOpen}
+                  aria-haspopup="menu"
                   className="relative"
                 >
                   <Bookmark className="h-4 w-4 mr-2" />
                   Saved Filters
                 </Button>
                 {savedFiltersOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-md shadow-lg z-50">
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-md shadow-lg z-50" role="menu">
                     {savedFilters.map((filter) => (
                       <div
                         key={filter.id}
                         className="flex items-center justify-between p-2 hover:bg-muted/50 border-b last:border-b-0"
+                        role="menuitem"
                       >
                         <button
                           onClick={() => handleLoadFilter(filter)}
                           className="flex-1 text-left text-sm truncate hover:text-primary"
+                          aria-label={`Load filter: ${filter.filterName}`}
                         >
                           {filter.filterName}
                         </button>
                         <button
                           onClick={() => openDeleteDialog(filter.id)}
                           className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive"
-                          title="Delete filter"
+                          aria-label={`Delete filter: ${filter.filterName}`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -890,58 +924,64 @@ export default function FilingsPage() {
               size="sm"
               onClick={handleClearFilters}
               disabled={!hasActiveFilters}
+              className="shrink-0"
             >
               <RotateCcw className="h-4 w-4 mr-2" />
-              Clear Filters
+              Clear
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSaveDialogOpen(true)}
               disabled={!hasActiveFilters}
+              className="shrink-0"
             >
               <Save className="h-4 w-4 mr-2" />
-              Save Filter
+              Save
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleExportCsv}
               disabled={isExporting}
+              className="shrink-0"
             >
               {isExporting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}
-              {isExporting ? "Exporting..." : "Export CSV"}
+              <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Export CSV"}</span>
+              <span className="sm:hidden">Export</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handleCopySummary}
               disabled={isLoading || filings.length === 0}
+              className="shrink-0"
             >
               <Copy className="h-4 w-4 mr-2" />
-              Copy Summary
+              <span className="hidden sm:inline">Copy Summary</span>
+              <span className="sm:hidden">Copy</span>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Results Count */}
-      <div className="flex items-center justify-between">
+      {/* Results Count and Sort */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           {isLoading
             ? "Loading..."
             : `${pagination.total.toLocaleString()} filing${pagination.total !== 1 ? "s" : ""} found`}
         </p>
         <div className="flex items-center gap-2">
-          <Label htmlFor="sortBy" className="text-sm">
-            Sort by:
+          <Label htmlFor="sortBy" className="text-sm shrink-0">
+            Sort:
           </Label>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[150px]">
+            <SelectTrigger className="w-[130px] sm:w-[150px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -955,8 +995,11 @@ export default function FilingsPage() {
             variant="outline"
             size="sm"
             onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            aria-label={`Sort order: ${sortOrder === "asc" ? "ascending" : "descending"}. Click to toggle.`}
+            className="px-3"
           >
-            {sortOrder === "asc" ? "↑ Asc" : "↓ Desc"}
+            {sortOrder === "asc" ? "↑" : "↓"}
+            <span className="ml-1 hidden sm:inline">{sortOrder === "asc" ? "Asc" : "Desc"}</span>
           </Button>
         </div>
       </div>
@@ -1012,147 +1055,210 @@ export default function FilingsPage() {
               )}
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th
-                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
-                      onClick={() => handleSort("companyName")}
-                    >
-                      <div className="flex items-center">
-                        Company Name
-                        <SortIndicator column="companyName" currentSortBy={sortBy} currentSortOrder={sortOrder} />
-                      </div>
-                    </th>
-                    <th
-                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
-                      onClick={() => handleSort("filingDate")}
-                    >
-                      <div className="flex items-center">
-                        Filing Date
-                        <SortIndicator column="filingDate" currentSortBy={sortBy} currentSortOrder={sortOrder} />
-                      </div>
-                    </th>
-                    <th
-                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
-                      onClick={() => handleSort("totalOffering")}
-                    >
-                      <div className="flex items-center">
-                        Offering
-                        <SortIndicator column="totalOffering" currentSortBy={sortBy} currentSortOrder={sortOrder} />
-                      </div>
-                    </th>
-                    <th
-                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
-                      onClick={() => handleSort("industryGroup")}
-                    >
-                      <div className="flex items-center">
-                        Industry
-                        <SortIndicator column="industryGroup" currentSortBy={sortBy} currentSortOrder={sortOrder} />
-                      </div>
-                    </th>
-                    <th
-                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
-                      onClick={() => handleSort("issuerState")}
-                    >
-                      <div className="flex items-center">
-                        State
-                        <SortIndicator column="issuerState" currentSortBy={sortBy} currentSortOrder={sortOrder} />
-                      </div>
-                    </th>
-                    <th
-                      className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
-                      onClick={() => handleSort("relevanceScore")}
-                    >
-                      <div className="flex items-center">
-                        Relevance
-                        <SortIndicator column="relevanceScore" currentSortBy={sortBy} currentSortOrder={sortOrder} />
-                      </div>
-                    </th>
-                    <th className="text-left p-4 font-medium">Status</th>
-                    <th className="w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filings.map((filing) => (
-                    <tr
-                      key={filing.id}
-                      className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() =>
-                        router.push(`/dashboard/filings/${filing.id}`)
-                      }
-                    >
-                      <td className="p-4">
-                        <span className="font-medium">{filing.companyName}</span>
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {filing.filingDate}
-                      </td>
-                      <td className="p-4">
-                        {formatCurrency(filing.totalOffering)}
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {filing.industryGroup || "N/A"}
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {filing.issuerState || "N/A"}
-                      </td>
-                      <td className="p-4">
-                        {filing.relevanceScore !== null ? (
+            <>
+              {/* Mobile Card View - visible below md */}
+              <div className="md:hidden divide-y">
+                {filings.map((filing) => (
+                  <button
+                    key={filing.id}
+                    className="w-full p-4 text-left hover:bg-muted/50 transition-colors"
+                    onClick={() => router.push(`/dashboard/filings/${filing.id}`)}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className="font-medium line-clamp-2 flex-1">{filing.companyName}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {filing.relevanceScore !== null && (
                           <Badge
                             variant="outline"
                             className={getRelevanceBadgeClass(filing.relevanceScore)}
                           >
                             {filing.relevanceScore}
                           </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
                         )}
-                      </td>
-                      <td className="p-4">
                         {filing.isAmendment ? (
-                          <Badge variant="secondary">Amendment</Badge>
+                          <Badge variant="secondary" className="text-xs">Amd</Badge>
                         ) : (
-                          <Badge>New</Badge>
+                          <Badge className="text-xs">New</Badge>
                         )}
-                      </td>
-                      <td className="p-4">
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                      </td>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                      <div className="text-muted-foreground">
+                        <span className="text-xs">Date:</span> {filing.filingDate}
+                      </div>
+                      <div className="text-muted-foreground">
+                        <span className="text-xs">Offering:</span> {formatCurrency(filing.totalOffering)}
+                      </div>
+                      <div className="text-muted-foreground truncate">
+                        <span className="text-xs">Industry:</span> {filing.industryGroup || "N/A"}
+                      </div>
+                      <div className="text-muted-foreground">
+                        <span className="text-xs">State:</span> {filing.issuerState || "N/A"}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Desktop Table View - visible on md and up */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th
+                        scope="col"
+                        aria-sort={sortBy === "companyName" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("companyName")}
+                      >
+                        <div className="flex items-center">
+                          Company Name
+                          <SortIndicator column="companyName" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        aria-sort={sortBy === "filingDate" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("filingDate")}
+                      >
+                        <div className="flex items-center">
+                          Filing Date
+                          <SortIndicator column="filingDate" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        aria-sort={sortBy === "totalOffering" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("totalOffering")}
+                      >
+                        <div className="flex items-center">
+                          Offering
+                          <SortIndicator column="totalOffering" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        aria-sort={sortBy === "industryGroup" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("industryGroup")}
+                      >
+                        <div className="flex items-center">
+                          Industry
+                          <SortIndicator column="industryGroup" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        aria-sort={sortBy === "issuerState" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("issuerState")}
+                      >
+                        <div className="flex items-center">
+                          State
+                          <SortIndicator column="issuerState" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th
+                        scope="col"
+                        aria-sort={sortBy === "relevanceScore" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
+                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        onClick={() => handleSort("relevanceScore")}
+                      >
+                        <div className="flex items-center">
+                          Relevance
+                          <SortIndicator column="relevanceScore" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                        </div>
+                      </th>
+                      <th scope="col" className="text-left p-4 font-medium">Status</th>
+                      <th scope="col" className="w-10"><span className="sr-only">View details</span></th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filings.map((filing) => (
+                      <tr
+                        key={filing.id}
+                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() =>
+                          router.push(`/dashboard/filings/${filing.id}`)
+                        }
+                      >
+                        <td className="p-4">
+                          <span className="font-medium">{filing.companyName}</span>
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {filing.filingDate}
+                        </td>
+                        <td className="p-4">
+                          {formatCurrency(filing.totalOffering)}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {filing.industryGroup || "N/A"}
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {filing.issuerState || "N/A"}
+                        </td>
+                        <td className="p-4">
+                          {filing.relevanceScore !== null ? (
+                            <Badge
+                              variant="outline"
+                              className={getRelevanceBadgeClass(filing.relevanceScore)}
+                            >
+                              {filing.relevanceScore}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          {filing.isAmendment ? (
+                            <Badge variant="secondary">Amendment</Badge>
+                          ) : (
+                            <Badge>New</Badge>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <p className="text-sm text-muted-foreground text-center sm:text-left">
             Page {pagination.page} of {pagination.totalPages}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center gap-2 sm:justify-end">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage(page - 1)}
               disabled={!pagination.hasPrev}
+              aria-label="Go to previous page"
+              className="px-3"
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              <ChevronLeft className="h-4 w-4 sm:mr-1" />
+              <span className="hidden sm:inline">Previous</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage(page + 1)}
               disabled={!pagination.hasNext}
+              aria-label="Go to next page"
+              className="px-3"
             >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4 sm:ml-1" />
             </Button>
           </div>
         </div>

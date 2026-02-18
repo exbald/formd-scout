@@ -25,6 +25,10 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void;
   placeholder?: string;
   className?: string;
+  /** Accessible label for screen readers */
+  ariaLabel?: string;
+  /** ID to associate with a label element */
+  id?: string;
 }
 
 export function MultiSelect({
@@ -33,6 +37,8 @@ export function MultiSelect({
   onChange,
   placeholder = "Select options...",
   className,
+  ariaLabel,
+  id,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -53,9 +59,11 @@ export function MultiSelect({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           className={cn(
             "w-full justify-between min-h-[38px] h-auto",
             className
@@ -72,6 +80,7 @@ export function MultiSelect({
                     {option?.label || value}
                     <button
                       className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      aria-label={`Remove ${option?.label || value}`}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           handleSelect(value);
@@ -97,6 +106,7 @@ export function MultiSelect({
           {selected.length > 0 && (
             <button
               className="ml-2 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              aria-label="Clear all selections"
               onClick={handleClear}
             >
               <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />

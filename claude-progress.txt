@@ -1,3 +1,71 @@
+## Session - Feature #69: Form controls have proper labels and ARIA attributes
+Date: 2026-02-18
+
+### What was implemented:
+- Added comprehensive accessibility attributes to all form controls on the filings page
+- Enhanced the MultiSelect component with proper ARIA support
+
+### Implementation details:
+
+1. **MultiSelect Component (src/components/ui/multi-select.tsx)**:
+   - Added `ariaLabel` and `id` props for screen reader support
+   - Added `role="combobox"` and `aria-expanded` attributes
+   - Added `aria-label` to badge remove buttons: `aria-label="Remove ${option?.label || value}"`
+   - Added `aria-label="Clear all selections"` to clear button
+
+2. **Search Input (src/app/dashboard/filings/page.tsx)**:
+   - Clear button has `aria-label="Clear search"`
+
+3. **Filter Inputs**:
+   - All inputs have proper `<Label htmlFor="...">` associations
+   - Industry MultiSelect: `id="industry-select"`, `ariaLabel="Select industries"`
+   - State MultiSelect: `id="state-select"`, `ariaLabel="Select states"`
+   - Filing Type Select: `id="filing-type"` with proper label
+
+4. **Filter Expand Button (Mobile)**:
+   - Added `aria-expanded={filtersExpanded}`
+   - Added `aria-controls="filter-controls"`
+   - Added `aria-label="${filtersExpanded ? 'Collapse' : 'Expand'} filters"`
+   - Added `id="filter-controls"` to the filter panel
+
+5. **Saved Filters Dropdown**:
+   - Button has `aria-expanded` and `aria-haspopup="menu"`
+   - Dropdown has `role="menu"`
+   - Menu items have `role="menuitem"`
+   - Load buttons have `aria-label="Load filter: ${filter.filterName}"`
+   - Delete buttons have `aria-label="Delete filter: ${filter.filterName}"`
+
+6. **Sort Controls**:
+   - Sort order toggle has `aria-label="Sort order: ${sortOrder}. Click to toggle."`
+
+7. **Table Headers**:
+   - All sortable columns have `scope="col"`
+   - Added `aria-sort` attributes: "ascending", "descending", or "none"
+   - View details header has `<span className="sr-only">View details</span>`
+
+8. **Pagination**:
+   - Previous button has `aria-label="Go to previous page"`
+   - Next button has `aria-label="Go to next page"`
+
+### Feature requirements verified:
+1. ✅ Navigate to /dashboard/filings
+2. ✅ Verify all filter inputs have label elements or aria-label
+3. ✅ Verify buttons have descriptive text or aria-label
+4. ✅ Verify search input has placeholder or label
+5. ✅ Verify dropdown menus have proper aria roles
+
+### Verification:
+- Lint: 0 errors, 24 warnings (import order only)
+- TypeScript: passes cleanly
+- Build: `npx next build` succeeds with all routes
+
+### Feature status:
+- Feature #69: PASSING ✅
+
+### Current completion: 67/78 features passing (85.9%)
+
+---
+
 ## Session - Feature #62: Zero-result filter combination shows empty state
 Date: 2026-02-18
 
