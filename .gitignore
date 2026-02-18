@@ -49,3 +49,11 @@ public/uploads
 /pg-data
 
 nul
+# autoforge / claude code
+/.autoforge
+/.claude
+/.cursor
+/.mcp.json
+CLAUDE.md
+claude-progress.txt
+app_spec.txt
