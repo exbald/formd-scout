@@ -258,6 +258,7 @@ export default function FilingsPage() {
   // Fetch filings
   const fetchFilings = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const params = new URLSearchParams();
 
@@ -278,7 +279,17 @@ export default function FilingsPage() {
       params.set("sortOrder", sortOrder);
 
       const response = await fetch(`/api/edgar/filings?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch filings");
+      if (!response.ok) {
+        // Try to get error message from response
+        let errorMessage = "Failed to load filings";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
+      }
 
       const data: FilingsResponse = await response.json();
       setFilings(data.filings);
@@ -288,8 +299,9 @@ export default function FilingsPage() {
       router.push(`/dashboard/filings?${params.toString()}`, {
         scroll: false,
       });
-    } catch (error) {
-      console.error("Error fetching filings:", error);
+    } catch (err) {
+      console.error("Error fetching filings:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -871,12 +883,40 @@ export default function FilingsPage() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <div className="flex-1">
+                <h3 className="font-medium text-destructive">Error Loading Filings</h3>
+                <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchFilings()}
+                  className="mt-3"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filings Table */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-8 text-center text-muted-foreground">
               Loading filings...
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center text-muted-foreground">
+              Unable to load filings. Please try again.
             </div>
           ) : filings.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
