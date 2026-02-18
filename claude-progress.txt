@@ -1649,3 +1649,43 @@ Date: 2026-02-17
 - Feature #27: PASSING ✅
 
 ### Current completion: 39/78 features passing (50.0%)
+
+## Session - Feature #36: Filings table rows navigate to detail page on click
+Date: 2026-02-18
+
+### What was verified:
+- Feature #36 "Filings table rows navigate to detail page on click" was already implemented
+- The filings table at /dashboard/filings has clickable rows that navigate to detail page
+
+### Implementation verified:
+1. **Filings table (src/app/dashboard/filings/page.tsx)**:
+   - Row click handler at line 853-855: `onClick={() => router.push(\`/dashboard/filings/\${filing.id}\`)}`
+   - Rows have cursor-pointer class for visual feedback
+   - Hover state with hover:bg-muted/50
+
+2. **Detail page (src/app/dashboard/filings/[id]/page.tsx)**:
+   - Full implementation with company name header
+   - Fetches filing data via API: `/api/edgar/filings/${id}`
+   - Displays filing details and AI analysis
+   - Has loading and error states
+
+3. **API endpoint (src/app/api/edgar/filings/[id]/route.ts)**:
+   - Returns single filing with LEFT JOINed enrichment data
+   - Protected by auth (returns 401 without session)
+   - Returns 404 for non-existent filings
+
+### Bug fix:
+- Fixed TypeScript error: changed unused `req` parameter to `_req` in filings detail API route
+
+### Verification:
+- Build: `npm run build:ci` succeeds with all routes compiled
+- Routes verified: /dashboard/filings, /dashboard/filings/[id]
+- Lint: 0 errors, pre-existing warnings only
+- TypeScript: passes cleanly
+- No mock data patterns in codebase (grep check clean)
+- API returns 401 Unauthorized without auth (correct behavior)
+
+### Feature status:
+- Feature #36: PASSING ✅
+
+### Current completion: 40/78 features passing (51.3%)
