@@ -9,9 +9,10 @@ import { formDFilings, filingEnrichments } from "@/lib/schema";
  * Helper to format a Date as YYYY-MM-DD string.
  */
 function toDateStr(d: Date): string {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  // Use UTC to match the UTC-based dates stored from the SEC EDGAR API (toISOString)
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -36,20 +37,18 @@ export async function GET() {
     const today = new Date();
     const todayStr = toDateStr(today);
 
-    // Start of week (Monday)
-    const dayOfWeek = today.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    // Rolling 7-day window (more useful than calendar week — avoids Monday showing 0)
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - mondayOffset);
+    weekStart.setUTCDate(today.getUTCDate() - 6);
     const weekStartStr = toDateStr(weekStart);
 
-    // Start of month
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    // Start of month (UTC)
+    const monthStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
     const monthStartStr = toDateStr(monthStart);
 
-    // 14 days ago for chart
+    // 14 days ago for chart (UTC)
     const fourteenDaysAgo = new Date(today);
-    fourteenDaysAgo.setDate(today.getDate() - 14);
+    fourteenDaysAgo.setUTCDate(today.getUTCDate() - 14);
     const fourteenDaysAgoStr = toDateStr(fourteenDaysAgo);
 
     // Run all queries in parallel for performance
