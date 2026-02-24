@@ -56,10 +56,10 @@ export function DashboardNav({
             className="flex items-center gap-2 mr-4 lg:mr-8"
             aria-label="FormD Scout - Dashboard"
           >
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+            <div className="flex items-center justify-center w-8 h-8 rounded-[0.15rem] bg-primary/10">
               <FileSearch className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-foreground tracking-tight">
               FormD Scout
             </span>
           </Link>
@@ -76,10 +76,10 @@ export function DashboardNav({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                    "flex items-center gap-2 px-4 py-2 rounded-[0.15rem] text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      ? "bg-muted/50 text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >
@@ -159,10 +159,10 @@ export function DashboardNav({
                     href={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-4 py-3 rounded-[0.15rem] text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        ? "bg-muted/50 text-primary border-l-4 border-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                     aria-current={isActive ? "page" : undefined}
                   >
@@ -210,7 +210,7 @@ export function DashboardNav({
                       setMobileMenuOpen(false);
                       handleSignOut();
                     }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-md text-sm font-medium w-full text-left text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 rounded-[0.15rem] text-sm font-medium w-full text-left text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                   >
                     <LogOut className="h-5 w-5" />
                     Sign Out
@@ -234,6 +234,20 @@ export function DashboardNav({
       <main className="container mx-auto px-4 py-6" id="main-content">
         {children}
       </main>
+
+      <footer className="border-t py-6 text-center text-sm text-muted-foreground mt-auto">
+        <div className="container mx-auto px-4 flex flex-col items-center gap-2">
+          <p>FormD Scout &mdash; SEC EDGAR Form D Filing Monitor</p>
+          <a 
+            href="https://zerodraft.studio" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-[10px] opacity-20 hover:opacity-100 transition-opacity"
+          >
+            zerodraft.studio
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

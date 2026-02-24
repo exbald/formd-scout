@@ -111,10 +111,10 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">SEC Form D Monitor</h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          <h1 className="text-2xl font-semibold tracking-tight">SEC Form D Monitor</h1>
+          <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest font-semibold">
             Monitor private funding filings from SEC EDGAR
           </p>
         </div>
@@ -375,9 +375,9 @@ export default function DashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {highRelevanceFilings.map((filing) => (
+                      {highRelevanceFilings.map((filing, index) => (
                         <tr
-                          key={filing.id}
+                          key={`${filing.id}-${index}`}
                           className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
                           onClick={() =>
                             router.push(`/dashboard/filings/${filing.id}`)
@@ -417,9 +417,9 @@ export default function DashboardPage() {
 
                 {/* Mobile Card View - visible only on mobile */}
                 <div className="sm:hidden divide-y">
-                  {highRelevanceFilings.map((filing) => (
+                  {highRelevanceFilings.map((filing, index) => (
                     <div
-                      key={filing.id}
+                      key={`${filing.id}-${index}`}
                       className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() =>
                         router.push(`/dashboard/filings/${filing.id}`)

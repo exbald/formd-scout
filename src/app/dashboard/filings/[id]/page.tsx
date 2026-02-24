@@ -254,13 +254,13 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start justify-between mb-6 sm:mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row items-start justify-between border-b border-border pb-4 mb-6 sm:mb-8 gap-4">
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-start sm:items-center gap-2 sm:gap-3">
-            <Building2 className="h-6 w-6 sm:h-8 sm:w-8 shrink-0 mt-0.5 sm:mt-0" />
+          <h1 className="text-2xl font-semibold tracking-tight flex items-start sm:items-center gap-2">
+            <Building2 className="h-5 w-5 shrink-0 mt-0.5 sm:mt-0 text-primary" />
             <span className="break-words">{filing.companyName}</span>
           </h1>
-          <p className="text-muted-foreground mt-2 flex items-center gap-2 flex-wrap text-sm sm:text-base">
+          <p className="text-muted-foreground mt-2 flex items-center gap-2 flex-wrap text-xs uppercase tracking-widest font-semibold">
             <Calendar className="h-4 w-4" />
             Filed: {formatDate(filing.filingDate)}
             {filing.isAmendment && (
@@ -587,7 +587,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
 
                 {/* Error message */}
                 {enrichError && (
-                  <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+                  <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-[0.15rem] text-sm">
                     {enrichError}
                   </div>
                 )}

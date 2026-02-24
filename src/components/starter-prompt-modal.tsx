@@ -163,7 +163,7 @@ export function StarterPromptModal() {
               placeholder="e.g., A task management app for teams with real-time collaboration, project timelines, and AI-powered task prioritization..."
               value={projectDescription}
               onChange={(e) => setProjectDescription(e.target.value)}
-              className="w-full h-24 px-3 py-2 border rounded-md resize-none text-sm"
+              className="w-full h-24 px-3 py-2 border rounded-[0.15rem] resize-none text-sm"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Optional: Add details about your project to get a more tailored

@@ -81,7 +81,7 @@ export function MultiSelect({
                     <span
                       role="button"
                       tabIndex={0}
-                      className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      className="ml-1 ring-offset-background rounded-[0.15rem] outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       aria-label={`Remove ${option?.label || value}`}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -108,7 +108,7 @@ export function MultiSelect({
           </div>
           {selected.length > 0 && (
             <button
-              className="ml-2 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              className="ml-2 ring-offset-background rounded-[0.15rem] outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               aria-label="Clear all selections"
               onClick={handleClear}
             >
@@ -131,7 +131,7 @@ export function MultiSelect({
                 >
                   <div
                     className={cn(
-                      "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                      "mr-2 flex h-4 w-4 items-center justify-center rounded-[0.15rem] border border-primary",
                       selected.includes(option.value)
                         ? "bg-primary text-primary-foreground"
                         : "opacity-50"
