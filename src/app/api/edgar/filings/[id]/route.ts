@@ -1,7 +1,5 @@
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formDFilings, filingEnrichments } from "@/lib/schema";
 
@@ -10,18 +8,12 @@ import { formDFilings, filingEnrichments } from "@/lib/schema";
  *
  * Returns a single Form D filing with optional enrichment data (LEFT JOIN).
  *
- * Auth: Requires authenticated session via Better Auth.
+ * Auth: Public — no authentication required.
  */
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  // Verify authentication
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id } = await params;
 
   try {

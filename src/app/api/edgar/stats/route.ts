@@ -1,7 +1,5 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { sql, gte, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formDFilings, filingEnrichments } from "@/lib/schema";
 
@@ -23,15 +21,9 @@ function toDateStr(d: Date): string {
  * Includes: today/thisWeek/thisMonth counts and totals, topIndustries,
  * topStates, averageOffering, and highRelevanceCount.
  *
- * Auth: Requires authenticated session via Better Auth.
+ * Auth: Public — no authentication required.
  */
 export async function GET() {
-  // Verify authentication
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     // Get current date boundaries for PostgreSQL
     const today = new Date();

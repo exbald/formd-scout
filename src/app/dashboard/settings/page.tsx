@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { User, Bell, Shield, Palette } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +11,28 @@ import { Separator } from "@/components/ui/separator";
 import { useSession } from "@/lib/auth-client";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, isPending: sessionPending } = useSession();
+
+  if (!sessionPending && !session) {
+    return (
+      <div className="max-w-lg mx-auto mt-16 text-center space-y-6 px-4">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold">Sign in to access Settings</h2>
+          <p className="text-muted-foreground">
+            Account settings are only available to signed-in users.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/login">
+            <Button size="lg" className="w-full sm:w-auto">Sign in</Button>
+          </Link>
+          <Link href="/register">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto">Create account</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const userInitial = (
     session?.user?.name?.[0] ||

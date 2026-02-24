@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 import {
   FileText,
   Search,
@@ -191,6 +193,7 @@ const SortIndicator = ({ column, currentSortBy, currentSortOrder }: { column: So
 export default function FilingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, isPending: sessionPending } = useSession();
 
   // Filter state
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -783,6 +786,40 @@ export default function FilingsPage() {
     // Reset to first page when sorting
     setPage(1);
   };
+
+  // Gate: require authentication to view the full filings list
+  if (!sessionPending && !session) {
+    return (
+      <div className="max-w-lg mx-auto mt-16 text-center space-y-6 px-4">
+        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto">
+          <FileText className="h-8 w-8 text-primary" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold">Sign in to access Filings</h2>
+          <p className="text-muted-foreground">
+            The full filings list with advanced filters, CSV export, and AI
+            enrichment is available to registered users. Create a free account
+            to get started.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/register">
+            <Button size="lg" className="w-full sm:w-auto">Create free account</Button>
+          </Link>
+          <Link href="/login">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto">Sign in</Button>
+          </Link>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Already browsing?{" "}
+          <Link href="/dashboard" className="text-primary hover:underline">
+            Go back to dashboard
+          </Link>{" "}
+          to explore high-relevance filings without signing in.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
