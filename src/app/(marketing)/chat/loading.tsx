@@ -15,26 +15,26 @@ export default function ChatLoading() {
           {/* AI message */}
           <div className="max-w-[80%]">
             <Skeleton className="h-4 w-12 mb-2" />
-            <Skeleton className="h-20 w-full rounded-lg" />
+            <Skeleton className="h-20 w-full rounded-[0.15rem]" />
           </div>
 
           {/* User message */}
           <div className="max-w-[80%] ml-auto">
             <Skeleton className="h-4 w-12 mb-2 ml-auto" />
-            <Skeleton className="h-12 w-full rounded-lg" />
+            <Skeleton className="h-12 w-full rounded-[0.15rem]" />
           </div>
 
           {/* AI message */}
           <div className="max-w-[80%]">
             <Skeleton className="h-4 w-12 mb-2" />
-            <Skeleton className="h-32 w-full rounded-lg" />
+            <Skeleton className="h-32 w-full rounded-[0.15rem]" />
           </div>
         </div>
 
         {/* Input skeleton */}
         <div className="flex gap-2">
-          <Skeleton className="flex-1 h-10 rounded-md" />
-          <Skeleton className="h-10 w-20 rounded-md" />
+          <Skeleton className="flex-1 h-10 rounded-[0.15rem]" />
+          <Skeleton className="h-10 w-20 rounded-[0.15rem]" />
         </div>
       </div>
     </div>

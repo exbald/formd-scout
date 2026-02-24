@@ -121,7 +121,7 @@ export function SetupChecklist() {
   const completed = steps.filter((s) => s.ok).length;
 
   return (
-    <div className="p-6 border rounded-lg text-left">
+    <div className="p-6 border rounded-[0.15rem] text-left">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-semibold">Setup checklist</h3>

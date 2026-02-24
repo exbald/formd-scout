@@ -791,7 +791,7 @@ export default function FilingsPage() {
   if (!sessionPending && !session) {
     return (
       <div className="max-w-lg mx-auto mt-16 text-center space-y-6 px-4">
-        <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto">
+        <div className="flex items-center justify-center w-16 h-16 rounded-[0.15rem] bg-primary/10 mx-auto">
           <FileText className="h-8 w-8 text-primary" />
         </div>
         <div className="space-y-2">
@@ -824,13 +824,13 @@ export default function FilingsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-border pb-4 mb-2">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-            <FileText className="h-6 w-6 md:h-8 md:w-8" />
+          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
             SEC Form D Filings
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">
+          <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest font-semibold">
             Browse and filter Form D filings from the SEC EDGAR database
           </p>
         </div>
@@ -841,7 +841,7 @@ export default function FilingsPage() {
         <CardContent className="p-3 md:p-4">
           {/* Filter Header - always visible, clickable on mobile to expand */}
           <button
-            className="flex items-center justify-between w-full md:w-auto md:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md"
+            className="flex items-center justify-between w-full md:w-auto md:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-[0.15rem]"
             onClick={() => setFiltersExpanded(!filtersExpanded)}
             aria-expanded={filtersExpanded}
             aria-controls="filter-controls"
@@ -1052,7 +1052,7 @@ export default function FilingsPage() {
                   Saved Filters
                 </Button>
                 {savedFiltersOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-md shadow-lg z-50" role="menu">
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-[0.15rem] shadow-lg z-50" role="menu">
                     {savedFilters.map((filter) => (
                       <div
                         key={filter.id}

@@ -131,7 +131,7 @@ export default function ProfilePage() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Full Name
                 </label>
-                <div className="p-3 border rounded-md bg-muted/10">
+                <div className="p-3 border rounded-[0.15rem] bg-muted/10">
                   {user.name || "Not provided"}
                 </div>
               </div>
@@ -139,7 +139,7 @@ export default function ProfilePage() {
                 <label className="text-sm font-medium text-muted-foreground">
                   Email Address
                 </label>
-                <div className="p-3 border rounded-md bg-muted/10 flex items-center justify-between">
+                <div className="p-3 border rounded-[0.15rem] bg-muted/10 flex items-center justify-between">
                   <span>{user.email}</span>
                   {user.emailVerified && (
                     <Badge
@@ -158,7 +158,7 @@ export default function ProfilePage() {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Account Status</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
                   <div className="space-y-1">
                     <p className="font-medium">Email Verification</p>
                     <p className="text-sm text-muted-foreground">
@@ -169,7 +169,7 @@ export default function ProfilePage() {
                     {user.emailVerified ? "Verified" : "Unverified"}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
                   <div className="space-y-1">
                     <p className="font-medium">Account Type</p>
                     <p className="text-sm text-muted-foreground">
@@ -193,7 +193,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
                 <div className="flex items-center space-x-3">
                   <div className="h-2 w-2 bg-green-500 rounded-full"></div>
                   <div>
@@ -322,7 +322,7 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
               <div className="flex items-center gap-3">
                 <Lock className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -339,7 +339,7 @@ export default function ProfilePage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
               <div className="flex items-center gap-3">
                 <Smartphone className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -354,7 +354,7 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-muted-foreground" />
                 <div>
@@ -385,7 +385,7 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
               <div>
                 <p className="font-medium">Marketing Emails</p>
                 <p className="text-sm text-muted-foreground">
@@ -394,7 +394,7 @@ export default function ProfilePage() {
               </div>
               <Badge variant="secondary">Coming Soon</Badge>
             </div>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between p-4 border rounded-[0.15rem]">
               <div>
                 <p className="font-medium">Security Alerts</p>
                 <p className="text-sm text-muted-foreground">

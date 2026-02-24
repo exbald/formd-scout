@@ -13,7 +13,7 @@ export default function DashboardLoading() {
         {/* Stats cards */}
         <div className="grid gap-4 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="p-6 border rounded-lg">
+            <div key={i} className="p-6 border rounded-[0.15rem]">
               <Skeleton className="h-4 w-24 mb-2" />
               <Skeleton className="h-8 w-16" />
             </div>
@@ -21,7 +21,7 @@ export default function DashboardLoading() {
         </div>
 
         {/* Profile card */}
-        <div className="p-6 border rounded-lg space-y-4">
+        <div className="p-6 border rounded-[0.15rem] space-y-4">
           <div className="flex items-center gap-4">
             <Skeleton className="h-16 w-16 rounded-full" />
             <div className="space-y-2">
@@ -47,7 +47,7 @@ export default function DashboardLoading() {
           <Skeleton className="h-6 w-36" />
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
+              <div key={i} className="flex items-center gap-4 p-4 border rounded-[0.15rem]">
                 <Skeleton className="h-10 w-10 rounded-full" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
