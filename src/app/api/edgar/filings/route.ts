@@ -1,7 +1,5 @@
-import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { eq, gte, lte, ilike, sql, and, asc, desc, SQL } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formDFilings, filingEnrichments } from "@/lib/schema";
 
@@ -12,15 +10,9 @@ import { formDFilings, filingEnrichments } from "@/lib/schema";
  * Supports filtering by date range, offering range, industry, state,
  * relevance score, amendment status, and free-text search.
  *
- * Auth: Requires authenticated session via Better Auth.
+ * Auth: Public — no authentication required.
  */
 export async function GET(req: NextRequest) {
-  // Verify authentication
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const searchParams = req.nextUrl.searchParams;
 
   // Pagination params
