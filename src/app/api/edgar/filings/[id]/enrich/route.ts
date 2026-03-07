@@ -1,34 +1,47 @@
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { formDFilings, filingEnrichments } from "@/lib/schema";
 import {
   enrichFiling,
   getEnrichmentModelName,
   type EnrichmentInput,
+  type ScoringProfile,
+  DEFAULT_SCORING_PROFILE,
 } from "@/lib/ai/enrichment";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { formDFilings, filingEnrichments, teamProfiles } from "@/lib/schema";
 
-/**
- * POST /api/edgar/filings/[id]/enrich
- *
- * Enrich a single filing with AI-generated analysis.
- * User-authenticated endpoint for on-demand enrichment from the UI.
- *
- * Auth: Requires authenticated session via Better Auth.
- */
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  // Verify authentication
+async function getScoringProfileForUser(userId: string): Promise<ScoringProfile> {
+  try {
+    const [profile] = await db
+      .select()
+      .from(teamProfiles)
+      .where(eq(teamProfiles.userId, userId))
+      .limit(1);
+
+    if (profile?.scoringCriteria) {
+      return {
+        targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
+        targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
+        idealCompanyProfile:
+          profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
+        scoringCriteria: profile.scoringCriteria,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching team profile:", error);
+  }
+
+  return DEFAULT_SCORING_PROFILE;
+}
+
+export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check if OpenRouter API key is configured
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json(
       { error: "OPENROUTER_API_KEY environment variable is not configured" },
@@ -37,20 +50,15 @@ export async function POST(
   }
 
   const { id } = await params;
+  const profile = await getScoringProfileForUser(session.user.id);
 
   try {
-    // Fetch the filing
-    const [filing] = await db
-      .select()
-      .from(formDFilings)
-      .where(eq(formDFilings.id, id))
-      .limit(1);
+    const [filing] = await db.select().from(formDFilings).where(eq(formDFilings.id, id)).limit(1);
 
     if (!filing) {
       return NextResponse.json({ error: "Filing not found" }, { status: 404 });
     }
 
-    // Check if already enriched - if so, delete old enrichment for re-analysis
     const [existing] = await db
       .select()
       .from(filingEnrichments)
@@ -58,13 +66,9 @@ export async function POST(
       .limit(1);
 
     if (existing) {
-      // Delete existing enrichment for re-analysis
-      await db
-        .delete(filingEnrichments)
-        .where(eq(filingEnrichments.filingId, id));
+      await db.delete(filingEnrichments).where(eq(filingEnrichments.filingId, id));
     }
 
-    // Prepare enrichment input
     const enrichmentInput: EnrichmentInput = {
       companyName: filing.companyName,
       cik: filing.cik,
@@ -83,8 +87,7 @@ export async function POST(
       firstSaleDate: filing.firstSaleDate,
     };
 
-    // Call AI enrichment
-    const enrichmentResult = await enrichFiling(enrichmentInput);
+    const enrichmentResult = await enrichFiling(enrichmentInput, { profile });
 
     if (!enrichmentResult.success || !enrichmentResult.data) {
       return NextResponse.json(
@@ -95,7 +98,6 @@ export async function POST(
 
     const enrichment = enrichmentResult.data;
 
-    // Store the enrichment
     const [newEnrichment] = await db
       .insert(filingEnrichments)
       .values({
@@ -106,6 +108,7 @@ export async function POST(
         estimatedHeadcount: enrichment.estimatedHeadcount,
         growthSignals: enrichment.growthSignals,
         competitors: enrichment.competitors,
+        officeSpaceLikelihood: enrichment.officeSpaceLikelihood ?? null,
         modelUsed: getEnrichmentModelName(),
       })
       .returning();

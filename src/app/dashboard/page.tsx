@@ -2,27 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Calendar, TrendingUp, DollarSign, ExternalLink } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDollarAmount } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { getRelevanceBadgeVariant, getRelevanceColor } from "@/lib/relevance-styles";
 
 interface StatsData {
   today: {
@@ -91,44 +78,25 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  // Get relevance badge styling
-  const getRelevanceBadgeVariant = (
-    score: number | null
-  ): "default" | "secondary" | "outline" => {
-    if (score === null) return "outline";
-    if (score >= 70) return "default";
-    if (score >= 40) return "secondary";
-    return "outline";
-  };
-
-  const getRelevanceColor = (score: number | null): string => {
-    if (score === null) return "text-muted-foreground";
-    if (score >= 70) return "text-green-600 dark:text-green-400";
-    if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
-    return "text-gray-500";
-  };
-
   return (
     <div className="container mx-auto p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8 border-b border-border pb-4">
+      <div className="border-border mb-6 flex flex-col items-start justify-between gap-4 border-b pb-4 sm:mb-8 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">SEC Form D Monitor</h1>
-          <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest font-semibold">
+          <p className="text-muted-foreground mt-1 text-xs font-semibold tracking-widest uppercase">
             Monitor private funding filings from SEC EDGAR
           </p>
         </div>
       </div>
 
       {/* Stats Cards Row - responsive: 1 col mobile, 2 cols tablet, 4 cols desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {/* Today's Filings Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Today&apos;s Filings
-            </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Today&apos;s Filings</CardTitle>
+            <FileText className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -136,9 +104,7 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">
-                {stats?.today.count ?? 0}
-              </div>
+              <div className="text-2xl font-bold">{stats?.today.count ?? 0}</div>
             )}
           </CardContent>
         </Card>
@@ -147,7 +113,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">This Week</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <Calendar className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -155,9 +121,7 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">
-                {stats?.thisWeek.count ?? 0}
-              </div>
+              <div className="text-2xl font-bold">{stats?.thisWeek.count ?? 0}</div>
             )}
           </CardContent>
         </Card>
@@ -165,10 +129,8 @@ export default function DashboardPage() {
         {/* High Relevance Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              High Relevance
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">High Relevance</CardTitle>
+            <TrendingUp className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -176,23 +138,17 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">
-                {stats?.highRelevanceCount ?? 0}
-              </div>
+              <div className="text-2xl font-bold">{stats?.highRelevanceCount ?? 0}</div>
             )}
-            <p className="text-xs text-muted-foreground mt-1">
-              Score 30+
-            </p>
+            <p className="text-muted-foreground mt-1 text-xs">Score 30+</p>
           </CardContent>
         </Card>
 
         {/* Average Round Size Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Average Round Size
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Average Round Size</CardTitle>
+            <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -209,21 +165,19 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Row - stack on mobile, side-by-side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Filings Over Time</CardTitle>
-            <CardDescription>
-              Daily filing counts for the last 14 days
-            </CardDescription>
+            <CardDescription>Daily filing counts for the last 14 days</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-[250px] w-full" />
             ) : !stats?.dailyCounts || stats.dailyCounts.length === 0 ? (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+              <div className="text-muted-foreground flex h-[250px] items-center justify-center">
                 <div className="text-center">
-                  <Calendar className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <Calendar className="mx-auto mb-2 h-10 w-10 opacity-50" />
                   <p>No filing data available for the last 14 days</p>
                 </div>
               </div>
@@ -261,16 +215,12 @@ export default function DashboardPage() {
                       }}
                       formatter={(value) => [value ?? 0, "Filings"]}
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        borderColor: "hsl(var(--border))",
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
                         borderRadius: "8px",
                       }}
                     />
-                    <Bar
-                      dataKey="count"
-                      fill="hsl(var(--primary))"
-                      radius={[4, 4, 0, 0]}
-                    />
+                    <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -281,17 +231,15 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Top Industries</CardTitle>
-            <CardDescription>
-              Most active industry groups
-            </CardDescription>
+            <CardDescription>Most active industry groups</CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <Skeleton className="h-[250px] w-full" />
             ) : !stats?.topIndustries || stats.topIndustries.length === 0 ? (
-              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+              <div className="text-muted-foreground flex h-[250px] items-center justify-center">
                 <div className="text-center">
-                  <TrendingUp className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <TrendingUp className="mx-auto mb-2 h-10 w-10 opacity-50" />
                   <p>No industry data available yet</p>
                 </div>
               </div>
@@ -323,16 +271,12 @@ export default function DashboardPage() {
                     <Tooltip
                       formatter={(value) => [value ?? 0, "Filings"]}
                       contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        borderColor: "hsl(var(--border))",
+                        backgroundColor: "var(--card)",
+                        borderColor: "var(--border)",
                         borderRadius: "8px",
                       }}
                     />
-                    <Bar
-                      dataKey="count"
-                      fill="hsl(var(--primary))"
-                      radius={[0, 4, 4, 0]}
-                    />
+                    <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -346,9 +290,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Recent High-Relevance Filings</CardTitle>
-            <CardDescription>
-              Top 10 filings with relevance score of 20 or higher
-            </CardDescription>
+            <CardDescription>Top 10 filings with relevance score of 20 or higher</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
@@ -356,21 +298,21 @@ export default function DashboardPage() {
                 <Skeleton className="h-[200px] w-full" />
               </div>
             ) : highRelevanceFilings.length === 0 ? (
-              <div className="p-6 sm:p-8 text-center text-muted-foreground">
-                No high-relevance filings found. Filings with AI enrichment scores of 20+
-                will appear here.
+              <div className="text-muted-foreground p-6 text-center sm:p-8">
+                No high-relevance filings found. Filings with AI enrichment scores of 20+ will
+                appear here.
               </div>
             ) : (
               <>
                 {/* Desktop Table View - hidden on mobile */}
-                <div className="hidden sm:block overflow-x-auto">
+                <div className="hidden overflow-x-auto sm:block">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left p-4 font-medium">Company Name</th>
-                        <th className="text-left p-4 font-medium">Filing Date</th>
-                        <th className="text-left p-4 font-medium">Offering Amount</th>
-                        <th className="text-left p-4 font-medium">Relevance</th>
+                        <th className="p-4 text-left font-medium">Company Name</th>
+                        <th className="p-4 text-left font-medium">Filing Date</th>
+                        <th className="p-4 text-left font-medium">Offering Amount</th>
+                        <th className="p-4 text-left font-medium">Relevance</th>
                         <th className="w-10"></th>
                       </tr>
                     </thead>
@@ -378,15 +320,13 @@ export default function DashboardPage() {
                       {highRelevanceFilings.map((filing, index) => (
                         <tr
                           key={`${filing.id}-${index}`}
-                          className="border-b hover:bg-muted/50 cursor-pointer transition-colors"
-                          onClick={() =>
-                            router.push(`/dashboard/filings/${filing.id}`)
-                          }
+                          className="hover:bg-muted/50 cursor-pointer border-b transition-colors"
+                          onClick={() => router.push(`/dashboard/filings/${filing.id}`)}
                         >
                           <td className="p-4">
                             <span className="font-medium">{filing.companyName}</span>
                           </td>
-                          <td className="p-4 text-muted-foreground">
+                          <td className="text-muted-foreground p-4">
                             {formatDate(filing.filingDate)}
                           </td>
                           <td className="p-4">
@@ -407,7 +347,7 @@ export default function DashboardPage() {
                             )}
                           </td>
                           <td className="p-4">
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                            <ExternalLink className="text-muted-foreground h-4 w-4" />
                           </td>
                         </tr>
                       ))}
@@ -416,19 +356,17 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Mobile Card View - visible only on mobile */}
-                <div className="sm:hidden divide-y">
+                <div className="divide-y sm:hidden">
                   {highRelevanceFilings.map((filing, index) => (
                     <div
                       key={`${filing.id}-${index}`}
-                      className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() =>
-                        router.push(`/dashboard/filings/${filing.id}`)
-                      }
+                      className="hover:bg-muted/50 cursor-pointer p-4 transition-colors"
+                      onClick={() => router.push(`/dashboard/filings/${filing.id}`)}
                     >
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{filing.companyName}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium">{filing.companyName}</p>
+                          <p className="text-muted-foreground mt-1 text-sm">
                             {formatDate(filing.filingDate)}
                           </p>
                         </div>
@@ -447,7 +385,7 @@ export default function DashboardPage() {
                             ? formatDollarAmount(filing.totalOffering)
                             : "N/A"}
                         </span>
-                        <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        <ExternalLink className="text-muted-foreground h-4 w-4" />
                       </div>
                     </div>
                   ))}

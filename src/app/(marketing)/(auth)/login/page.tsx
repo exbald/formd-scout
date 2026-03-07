@@ -1,27 +1,21 @@
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { SignInButton } from "@/components/auth/sign-in-button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { auth } from "@/lib/auth"
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { SignInButton } from "@/components/auth/sign-in-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reset?: string }>
+  searchParams: Promise<{ reset?: string }>;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (session) {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
-  const { reset } = await searchParams
+  const { reset } = await searchParams;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
@@ -32,7 +26,7 @@ export default async function LoginPage({
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           {reset === "success" && (
-            <p className="mb-4 text-sm text-green-600 dark:text-green-400">
+            <p className="text-success mb-4 text-sm">
               Password reset successfully. Please sign in with your new password.
             </p>
           )}
@@ -40,5 +34,5 @@ export default async function LoginPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

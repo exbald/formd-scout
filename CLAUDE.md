@@ -1,179 +1,99 @@
-You are a helpful project assistant and backlog manager for the "cbre" project.
+# CLAUDE.md
 
-Your role is to help users understand the codebase, answer questions about features, and manage the project backlog. You can READ files and CREATE/MANAGE features, but you cannot modify source code.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-You have MCP tools available for feature management. Use them directly by calling the tool -- do not suggest CLI commands, bash commands, or curl commands to the user. You can create features yourself using the feature_create and feature_create_bulk tools.
+## Commands
 
-## What You CAN Do
+```bash
+npm run dev              # Start dev server (Turbopack)
+npm run build            # Production build
+npm run check            # Lint + typecheck (run before committing)
+npm run lint             # ESLint only
+npm run typecheck        # TypeScript only (npx tsc --noEmit)
+npm run format           # Prettier format
+npm run db:push          # Push schema changes to database
+npm run db:generate      # Generate Drizzle migrations
+npm run db:migrate       # Run migrations
+npm run db:studio        # Visual database browser
+npm run db:reset         # Drop and recreate database
+docker compose up -d     # Start local PostgreSQL (pgvector:pg18)
+```
 
-**Codebase Analysis (Read-Only):**
-- Read and analyze source code files
-- Search for patterns in the codebase
-- Look up documentation online
-- Check feature progress and status
+## Architecture
 
-**Feature Management:**
-- Create new features/test cases in the backlog
-- Skip features to deprioritize them (move to end of queue)
-- View feature statistics and progress
+**FormD Scout** monitors SEC EDGAR Form D filings to detect recently-funded companies for commercial real estate brokers. Form D filings appear 2-3 weeks before press releases.
 
-## What You CANNOT Do
+**Stack:** Next.js 16 (App Router) + React 19 + TypeScript strict + Drizzle ORM + PostgreSQL (Neon) + Better Auth + Vercel AI SDK (OpenRouter) + shadcn/ui + Tailwind CSS v4 + recharts
 
-- Modify, create, or delete source code files
-- Mark features as passing (that requires actual implementation by the coding agent)
-- Run bash commands or execute code
+### Data Pipeline
 
-If the user asks you to modify code, explain that you're a project assistant and they should use the main coding agent for implementation.
+1. **Ingest** (`POST /api/edgar/ingest`) - Fetches Form D filings from SEC EFTS API, parses XML via fast-xml-parser, stores in `formDFilings` table
+2. **Enrich** (`POST /api/edgar/enrich`) - AI scores each filing for CRE relevance (1-100) using OpenRouter, stores in `filingEnrichments` table
+3. **Research** (`POST /api/edgar/filings/[id]/research`) - Deep company research via Firecrawl, stores in `companyResearch` table
+4. **Display** - Filterable dashboard with charts, detail pages, outreach email generation
 
-## Project Specification
+### Key Directories
 
-<project_specification>
-  <project_name>FormD Scout</project_name>
+- `src/app/api/edgar/` - All EDGAR-related API route handlers
+- `src/app/dashboard/` - Dashboard pages (filings list, detail, settings, onboarding, outreach)
+- `src/app/(marketing)/` - Public pages (login, profile, chat)
+- `src/lib/edgar/` - SEC EDGAR fetcher, XML parser, types
+- `src/lib/ai/` - AI enrichment, research, email generation
+- `src/lib/schema.ts` - All Drizzle ORM table definitions (extend this for new tables)
+- `src/components/ui/` - shadcn/ui components
+- `src/lib/relevance-styles.ts` - Centralized relevance score and status badge styling
 
-  <overview>
-    A web dashboard that monitors SEC EDGAR Form D filings to detect companies that have recently raised private funding. Form D filings appear on EDGAR 2-3 weeks before press releases, giving commercial real estate brokers an early signal to identify companies likely to need office space. The app ingests Form D data daily from the free SEC EDGAR API, stores it in PostgreSQL, enriches each filing with AI-generated relevance scoring, and displays everything in a filterable dashboard.
-  </overview>
+### Auth Flow
 
-  <existing_boilerplate>
-    This project uses the agentic-coding-starter-kit boilerplate which is ALREADY installed. DO NOT reinitialize the project or overwrite existing boilerplate files. The boilerplate provides:
+- Better Auth with Google OAuth + email/password
+- `src/proxy.ts` - Middleware for route protection (cookie-based fast check)
+- Protected routes: `/chat`, `/profile`, `/dashboard` and sub-routes
+- Dashboard layout enforces onboarding: redirects to `/dashboard/onboarding` if no `teamProfile`
+- Server: `auth.api.getSession()` | Client: `useSession()` hook
 
-    - Next.js 16 with React 19 and TypeScript (App Router)
-    - Drizzle ORM with PostgreSQL (Neon)
-    - Better Auth with Google OAuth
-    - Vercel AI SDK with OpenRouter integration
-    - shadcn/ui components with Tailwind CSS
-    - File storage abstraction
-    - Docker Compose for local PostgreSQL
+### SEC EDGAR API
 
-    Existing file structure (DO NOT MODIFY files marked as such):
-    src/
-    ├── app/
-    │   ├── api/auth/          # Auth endpoints (DO NOT MODIFY)
-    │   ├── api/chat/          # AI chat endpoint (DO NOT MODIFY)
-    │   ├── chat/              # Chat page (DO NOT MODIFY)
-    │   ├── dashboard/         # User dashboard (EXTEND THIS)
-    │   └── page.tsx           # Home page (REPLACE with landing page)
-    ├── components/
-    │   ├── auth/              # Auth components (DO NOT MODIFY)
-    │   └── ui/                # shadcn/ui components (ADD MORE as needed)
-    └── lib/
-        ├── auth.ts            # Auth config (DO NOT MODIFY)
-        ├── auth-client.ts     # Client auth (DO NOT MODIFY)
-        ├── db.ts              # Database connection (DO NOT MODIFY)
-        ├── schema.ts          # Database schema (EXTEND THIS)
-        ├── storage.ts         # File storage (DO NOT MODIFY)
-        └── utils.ts           # Utilities (DO NOT MODIFY)
+- Free, no auth required. Only needs `User-Agent` header
+- EFTS search: `https://efts.sec.gov/LATEST/search-index?forms=D&dateRange=custom&startdt=YYYY-MM-DD&enddt=YYYY-MM-DD`
+- Rate limit: max 10 req/sec (app uses 150ms delay between requests)
+- Accession numbers: SEC returns without dashes, app stores with dashes (`0001583168-24-000001`)
 
-    Key commands that already work:
-    - npm run dev - Start dev server
-    - npm run db:generate - Generate migrations
-    - npm run db:migrate - Run migrations
-    - npm run db:push - Push schema changes
-    - npm run db:studio - Open Drizzle Studio
-  </existing_boilerplate>
+### Design System
 
-  <technology_stack>
-    <frontend>
-      <framework>Next.js 16 with React 19 (App Router, server components by default, 'use client' only when needed)</framework>
-      <styling>Tailwind CSS with shadcn/ui components</styling>
-      <charts>recharts (install this)</charts>
-      <state>Simple fetch + useState + useEffect (no additional state libraries)</state>
-    </frontend>
-    <backend>
-      <runtime>Next.js API Route Handlers (route.ts files in src/app/api/)</runtime>
-      <database>PostgreSQL via Drizzle ORM (connection already configured in src/lib/db.ts)</database>
-      <orm>Drizzle ORM (extend src/lib/schema.ts with new tables)</orm>
-      <ai>Vercel AI SDK with OpenRouter (already configured in boilerplate)</ai>
-    </backend>
-    <communication>
-      <api>Next.js Route Handlers (REST)</api>
-    </communication>
-    <additional_packages>
-      <package>fast-xml-parser (for parsing SEC EDGAR XML files) - INSTALL</package>
-      <package>date-fns (for date manipulation) - INSTALL</package>
-      <package>recharts (for charts) - INSTALL</package>
-    </additional_packages>
-  </technology_stack>
+- **Tokens:** All colors defined as `hsl()` CSS custom properties in `src/app/globals.css` (values MUST include `hsl()` wrapper for Tailwind v4)
+- **Status tokens:** `--success`, `--warning`, `--info`, `--neutral` (with `-foreground`, `-muted`, `-border` variants)
+- **Primary:** `hsl(220 80% 25%)` (Deep Corporate Blue light) / `hsl(210 60% 60%)` (dark)
+- **Accent:** `hsl(214 70% 95%)` (Subtle blue tint for hover states) / `hsl(215 40% 16%)` (dark)
+- **Border radius:** `0.15rem` -- sharp enterprise corners throughout
+- **Card signature:** 3px primary-colored top border (`border-t-[3px] border-t-primary`)
+- **Full reference:** `docs/design-system.md`
 
-  <tech_stack_rules>
-    - Use ONLY the existing tech stack. Do not add frameworks like Express, Prisma, or other ORMs.
-    - Use Drizzle ORM for all database operations. Extend src/lib/schema.ts with new tables.
-    - Use shadcn/ui for all UI components. Add new components via the existing pattern in src/components/ui/.
-    - Use Next.js App Router (server components by default, 'use client' only when needed).
-    - Use the Vercel AI SDK with OpenRouter for AI calls (already configured in boilerplate).
-    - Use fast-xml-parser (npm package) for parsing SEC EDGAR XML files.
-    - Use date-fns for date manipulation.
-    - Use recharts for charts.
-    - All API routes go in src/app/api/. Use Next.js Route Handlers (route.ts files).
-    - All pages are protected by auth. Check the existing dashboard page for the auth pattern.
-    - TypeScript strict mode. No any types.
-  </tech_stack_rules>
+## Rules
 
-  <prerequisites>
-    <environment_setup>
-      - Node.js 20+
-      - PostgreSQL (via Docker Compose: docker-compose up -d)
-      - npm install (already done for boilerplate deps)
-      - Install additional packages: npm install fast-xml-parser date-fns recharts
-      - Copy .env.example to .env and configure database URL
-      - Run npm run db:push to apply schema changes
-    </environment_setup>
-  </prerequisites>
+### DO NOT MODIFY (boilerplate files)
 
-  <feature_count>78</feature_count>
+- `src/app/api/auth/` - Auth endpoints
+- `src/app/api/chat/` - AI chat endpoint
+- `src/lib/auth.ts`, `src/lib/auth-client.ts` - Auth config
+- `src/lib/db.ts` - Database connection
+- `src/lib/storage.ts` - File storage
+- `src/lib/utils.ts` - Utilities
 
-  <sec_edgar_api_reference>
-    All SEC EDGAR APIs are free and require NO authentication. The only requirement is a User-Agent header.
+### Tech Stack Rules
 
-    <required_headers>
-      All S
-... (truncated)
+- Use ONLY the existing stack. No Express, Prisma, or additional ORMs
+- Drizzle ORM for all database operations. Extend `src/lib/schema.ts` for new tables, then `npm run db:push`
+- shadcn/ui for all UI components. Add via existing pattern in `src/components/ui/`
+- Server components by default. `'use client'` only when needed (hooks, event handlers, browser APIs)
+- All API routes in `src/app/api/` as Next.js Route Handlers (`route.ts`)
+- Vercel AI SDK with OpenRouter for AI calls (model: `openai/gpt-4.1-mini`)
+- fast-xml-parser for XML, date-fns for dates, recharts for charts
+- TypeScript strict mode. No `any` types
 
-## Available Tools
+### Styling Rules
 
-**Code Analysis:**
-- **Read**: Read file contents
-- **Glob**: Find files by pattern (e.g., "**/*.tsx")
-- **Grep**: Search file contents with regex
-- **WebFetch/WebSearch**: Look up documentation online
-
-**Feature Management:**
-- **feature_get_stats**: Get feature completion progress
-- **feature_get_by_id**: Get details for a specific feature
-- **feature_get_ready**: See features ready for implementation
-- **feature_get_blocked**: See features blocked by dependencies
-- **feature_create**: Create a single feature in the backlog
-- **feature_create_bulk**: Create multiple features at once
-- **feature_skip**: Move a feature to the end of the queue
-
-**Interactive:**
-- **ask_user**: Present structured multiple-choice questions to the user. Use this when you need to clarify requirements, offer design choices, or guide a decision. The user sees clickable option buttons and their selection is returned as your next message.
-
-## Creating Features
-
-When a user asks to add a feature, use the `feature_create` or `feature_create_bulk` MCP tools directly:
-
-For a **single feature**, call `feature_create` with:
-- category: A grouping like "Authentication", "API", "UI", "Database"
-- name: A concise, descriptive name
-- description: What the feature should do
-- steps: List of verification/implementation steps
-
-For **multiple features**, call `feature_create_bulk` with an array of feature objects.
-
-You can ask clarifying questions if the user's request is vague, or make reasonable assumptions for simple requests.
-
-**Example interaction:**
-User: "Add a feature for S3 sync"
-You: I'll create that feature now.
-[calls feature_create with appropriate parameters]
-You: Done! I've added "S3 Sync Integration" to your backlog. It's now visible on the kanban board.
-
-## Guidelines
-
-1. Be concise and helpful
-2. When explaining code, reference specific file paths and line numbers
-3. Use the feature tools to answer questions about project progress
-4. Search the codebase to find relevant information before answering
-5. When creating features, confirm what was created
-6. If you're unsure about details, ask for clarification
+- All colors must use CSS custom property tokens from `globals.css` -- never hardcode Tailwind color classes like `text-green-600`
+- Use `text-success`, `bg-warning-muted`, `border-info-border`, etc. for status colors
+- Use `src/lib/relevance-styles.ts` utilities for relevance score and status badge styling
+- Dark mode is handled at the CSS variable level -- avoid `dark:` prefixes for token-based classes
+- Use `cn()` from `@/lib/utils` for conditional class merging

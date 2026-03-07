@@ -15,7 +15,6 @@ import {
 
 // IMPORTANT! ID fields should ALWAYS use UUID types, EXCEPT the BetterAuth tables.
 
-
 export const user = pgTable(
   "user",
   {
@@ -101,9 +100,7 @@ export const formDFilings = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     cik: varchar("cik", { length: 10 }).notNull(),
-    accessionNumber: varchar("accession_number", { length: 25 })
-      .notNull()
-      .unique(),
+    accessionNumber: varchar("accession_number", { length: 25 }).notNull().unique(),
     companyName: text("company_name").notNull(),
     entityType: varchar("entity_type", { length: 50 }),
     stateOfInc: varchar("state_of_inc", { length: 10 }),
@@ -155,6 +152,7 @@ export const filingEnrichments = pgTable(
     estimatedHeadcount: integer("estimated_headcount"),
     growthSignals: jsonb("growth_signals").$type<string[]>(),
     competitors: jsonb("competitors").$type<string[]>(),
+    officeSpaceLikelihood: varchar("office_space_likelihood", { length: 20 }),
     enrichedAt: timestamp("enriched_at").defaultNow().notNull(),
     modelUsed: varchar("model_used", { length: 100 }),
   },
@@ -178,4 +176,192 @@ export const savedFilters = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [index("saved_filters_user_id_idx").on(table.userId)]
+);
+
+// ===================== Lead Intelligence Platform Tables =====================
+
+export const teamProfiles = pgTable(
+  "team_profiles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    teamName: varchar("team_name", { length: 200 }),
+    companyName: varchar("company_name", { length: 200 }),
+    keyClients: jsonb("key_clients").$type<
+      Array<{
+        name: string;
+        industry: string;
+        relationship: string;
+        notableDeals: string;
+      }>
+    >(),
+    teamBio: text("team_bio"),
+    expertise: jsonb("expertise").$type<string[]>(),
+    targetMarkets: jsonb("target_markets").$type<string[]>(),
+    targetIndustries: jsonb("target_industries").$type<string[]>(),
+    idealCompanyProfile: text("ideal_company_profile"),
+    scoringCriteria: jsonb("scoring_criteria").$type<{
+      high: string;
+      medium: string;
+      low: string;
+    }>(),
+    emailSignature: text("email_signature"),
+    emailTone: varchar("email_tone", { length: 20 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("team_profiles_user_id_idx").on(table.userId)]
+);
+
+export const appSettings = pgTable(
+  "app_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    autoResearchThreshold: integer("auto_research_threshold").default(60),
+    autoResearchEnabled: boolean("auto_research_enabled").default(true),
+    maxDailyResearch: integer("max_daily_research").default(15),
+    maxAgentCredits: integer("max_agent_credits").default(500),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("app_settings_user_id_idx").on(table.userId)]
+);
+
+export const companyResearch = pgTable(
+  "company_research",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    filingId: uuid("filing_id")
+      .notNull()
+      .references(() => formDFilings.id, { onDelete: "cascade" }),
+    websiteUrl: text("website_url"),
+    websiteSummary: text("website_summary"),
+    jobPostings:
+      jsonb("job_postings").$type<
+        Array<{ title: string; location: string; url: string | null; datePosted: string | null }>
+      >(),
+    jobPostingsCount: integer("job_postings_count"),
+    leadershipTeam:
+      jsonb("leadership_team").$type<
+        Array<{ name: string; title: string; email: string | null; linkedinUrl: string | null }>
+      >(),
+    officeLocations:
+      jsonb("office_locations").$type<
+        Array<{ city: string; state: string; country: string; type: string }>
+      >(),
+    techStack: jsonb("tech_stack").$type<string[]>(),
+    recentNews:
+      jsonb("recent_news").$type<
+        Array<{ headline: string; date: string; url: string | null; summary: string }>
+      >(),
+    employeeEstimate: integer("employee_estimate"),
+    fundingHistory: jsonb("funding_history").$type<
+      Array<{ round: string; amount: string | null; date: string | null; investors: string[] }>
+    >(),
+    growthSignals: jsonb("growth_signals").$type<string[]>(),
+    companySize: varchar("company_size", { length: 50 }),
+    socialProfiles: jsonb("social_profiles").$type<{
+      linkedin: string | null;
+      twitter: string | null;
+      crunchbase: string | null;
+    }>(),
+    researchPrompt: text("research_prompt"),
+    creditsUsed: integer("credits_used"),
+    researchedAt: timestamp("researched_at").defaultNow().notNull(),
+    source: varchar("source", { length: 50 }),
+  },
+  (table) => [index("company_research_filing_id_idx").on(table.filingId)]
+);
+
+export const researchJobs = pgTable(
+  "research_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    filingId: uuid("filing_id")
+      .notNull()
+      .references(() => formDFilings.id, { onDelete: "cascade" }),
+    agentId: text("agent_id").notNull(),
+    status: varchar("status", { length: 20 }).notNull().default("pending"),
+    prompt: text("prompt"),
+    maxCredits: integer("max_credits"),
+    error: text("error"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [index("research_jobs_filing_id_idx").on(table.filingId)]
+);
+
+export const alertConfigs = pgTable(
+  "alert_configs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    minRelevanceScore: integer("min_relevance_score"),
+    states: jsonb("states").$type<string[]>(),
+    industries: jsonb("industries").$type<string[]>(),
+    minOffering: numeric("min_offering", { precision: 15, scale: 2 }),
+    emailEnabled: boolean("email_enabled").default(false),
+    emailAddress: text("email_address"),
+    webhookUrl: text("webhook_url"),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("alert_configs_user_id_idx").on(table.userId)]
+);
+
+export const alertHistory = pgTable("alert_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  alertConfigId: uuid("alert_config_id")
+    .notNull()
+    .references(() => alertConfigs.id, { onDelete: "cascade" }),
+  filingId: uuid("filing_id")
+    .notNull()
+    .references(() => formDFilings.id, { onDelete: "cascade" }),
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  channel: varchar("channel", { length: 20 }),
+});
+
+export const emailDrafts = pgTable(
+  "email_drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    filingId: uuid("filing_id")
+      .notNull()
+      .references(() => formDFilings.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    recipientName: varchar("recipient_name", { length: 200 }),
+    recipientTitle: varchar("recipient_title", { length: 200 }),
+    recipientEmail: varchar("recipient_email", { length: 200 }),
+    subject: text("subject"),
+    body: text("body"),
+    followUpSequence:
+      jsonb("follow_up_sequence").$type<
+        Array<{ delayDays: number; subject: string; body: string }>
+      >(),
+    referencedClients: jsonb("referenced_clients").$type<string[]>(),
+    status: varchar("status", { length: 20 }).default("draft"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("email_drafts_filing_id_idx").on(table.filingId),
+    index("email_drafts_user_id_idx").on(table.userId),
+  ]
 );
