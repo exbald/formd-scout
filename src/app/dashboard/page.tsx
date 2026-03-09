@@ -131,7 +131,7 @@ export default function DashboardPage() {
         {/* This Week Card */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Week</CardTitle>
+            <CardTitle className="text-sm font-medium">Last 7 Days</CardTitle>
             <Calendar className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -159,7 +159,7 @@ export default function DashboardPage() {
             ) : (
               <div className="text-2xl font-bold">{stats?.highRelevanceCount ?? 0}</div>
             )}
-            <p className="text-muted-foreground mt-1 text-xs">Score 60+</p>
+            <p className="text-muted-foreground mt-1 text-xs">Score 60+ (7 days)</p>
           </CardContent>
         </Card>
 

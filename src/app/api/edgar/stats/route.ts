@@ -81,20 +81,22 @@ export async function GET() {
         .from(formDFilings)
         .where(gte(formDFilings.filingDate, monthStartStr)),
 
-      // High relevance count (score >= 60)
+      // High relevance count (score >= 60, last 7 days)
       db
         .select({
           count: sql<number>`count(*)::int`,
         })
         .from(filingEnrichments)
-        .where(sql`${filingEnrichments.relevanceScore} >= 60`),
+        .innerJoin(formDFilings, sql`${filingEnrichments.filingId} = ${formDFilings.id}`)
+        .where(sql`${filingEnrichments.relevanceScore} >= 60 AND ${formDFilings.filingDate} >= ${weekStartStr}`),
 
-      // Average offering amount (across all filings with non-null totalOffering)
+      // Average offering amount (last 7 days)
       db
         .select({
           avg: sql<string>`coalesce(avg(${formDFilings.totalOffering}), 0)::text`,
         })
-        .from(formDFilings),
+        .from(formDFilings)
+        .where(gte(formDFilings.filingDate, weekStartStr)),
 
       // Top 5 industries by filing count
       db
