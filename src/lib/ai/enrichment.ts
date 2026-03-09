@@ -3,48 +3,56 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import type { FilingEnrichment } from "@/lib/edgar/types";
 
-/**
- * Schema for the structured AI enrichment response.
- * Uses Zod for type-safe validation of AI output.
- */
+export interface ScoringProfile {
+  targetMarkets: string[];
+  targetIndustries: string[];
+  idealCompanyProfile: string;
+  scoringCriteria: {
+    high: string;
+    medium: string;
+    low: string;
+  };
+}
+
+export const DEFAULT_SCORING_PROFILE: ScoringProfile = {
+  targetMarkets: ["New York", "Manhattan", "NYC tri-state area"],
+  targetIndustries: ["technology", "fintech", "AI/ML", "SaaS"],
+  idealCompanyProfile: "Growth-stage technology companies likely to need significant office space",
+  scoringCriteria: {
+    high: "Tech/growth company, large funding round, in target market, likely to need significant office space",
+    medium:
+      "Potential office needs but less certain - smaller round, non-tech but growing, or outside primary target market",
+    low: "Pooled investment fund, real estate fund, very small round, shell company, or no clear office space need",
+  },
+};
+
 const enrichmentSchema = z.object({
-  companySummary: z
-    .string()
-    .describe("2-3 sentence summary of the company and what they do"),
+  companySummary: z.string().describe("2-3 sentence summary of the company and what they do"),
   relevanceScore: z
     .number()
     .int()
     .min(1)
     .max(100)
-    .describe(
-      "Relevance score from 1-100 for NYC commercial real estate brokers targeting tech companies"
-    ),
+    .describe("Relevance score from 1-100 based on configured criteria"),
   relevanceReasoning: z
     .string()
-    .describe(
-      "1-2 sentence explanation of why this company scored as it did for CRE relevance"
-    ),
+    .describe("1-2 sentence explanation of why this company scored as it did"),
   estimatedHeadcount: z
     .number()
     .int()
     .min(0)
-    .describe(
-      "Rough headcount estimate based on funding amount, industry, and company stage"
-    ),
+    .describe("Rough headcount estimate based on funding amount, industry, and company stage"),
   growthSignals: z
     .array(z.string())
-    .describe(
-      'Array of growth signals like "Large Series B", "NYC-based", "Expanding workforce"'
-    ),
+    .describe('Array of growth signals like "Large Series B", "NYC-based", "Expanding workforce"'),
   competitors: z
     .array(z.string())
     .describe("Array of known competitor company names in the same space"),
+  officeSpaceLikelihood: z
+    .enum(["high", "medium", "low", "unknown"])
+    .describe("Likelihood this company needs office space based on all available data"),
 });
 
-/**
- * Input data for enrichment - a subset of filing fields relevant for AI analysis.
- * This matches the formDFilings table columns.
- */
 export interface EnrichmentInput {
   companyName: string;
   cik: string;
@@ -63,12 +71,13 @@ export interface EnrichmentInput {
   firstSaleDate: string | null;
 }
 
-/**
- * Build the analysis prompt for a given filing record.
- */
-function buildEnrichmentPrompt(filing: EnrichmentInput): string {
+function buildDynamicEnrichmentPrompt(
+  filing: EnrichmentInput,
+  profile: ScoringProfile,
+  websiteContent?: string
+): string {
   const lines: string[] = [
-    "Analyze this SEC Form D filing for relevance to NYC commercial real estate brokers who target technology and growth-stage companies likely to need office space.",
+    `Analyze this SEC Form D filing for relevance to commercial real estate brokers targeting ${profile.idealCompanyProfile}.`,
     "",
     "Filing Details:",
     `- Company Name: ${filing.companyName}`,
@@ -83,42 +92,44 @@ function buildEnrichmentPrompt(filing: EnrichmentInput): string {
     `- Filing Type: ${filing.isAmendment ? "Amendment (D/A)" : "New Filing (D)"}`,
     `- Filing Date: ${filing.filingDate}`,
     `- Federal Exemptions: ${filing.federalExemptions ?? "Not specified"}`,
-    `- First Sale Date: ${filing.yetToOccur ? "Yet to Occur" : filing.firstSaleDate ?? "Not specified"}`,
+    `- First Sale Date: ${filing.yetToOccur ? "Yet to Occur" : (filing.firstSaleDate ?? "Not specified")}`,
+  ];
+
+  if (websiteContent) {
+    lines.push("", "Website Research Data:");
+    lines.push(websiteContent);
+  }
+
+  lines.push(
+    "",
+    `Target Markets: ${profile.targetMarkets.join(", ")}`,
+    `Target Industries: ${profile.targetIndustries.join(", ")}`,
     "",
     "Scoring Guidelines:",
-    "- Score 70-100: Strong CRE lead. Tech/growth company, large funding round, NYC/tri-state area, likely to need significant office space.",
-    "- Score 40-69: Moderate lead. Potential office needs but less certain (smaller round, non-tech but growing, or outside NYC).",
-    "- Score 1-39: Weak lead. Pooled investment fund, real estate fund, very small round, shell company, or no clear office space need.",
+    `- Score 70-100: ${profile.scoringCriteria.high}`,
+    `- Score 40-69: ${profile.scoringCriteria.medium}`,
+    `- Score 1-39: ${profile.scoringCriteria.low}`,
     "",
-    "Be specific in your analysis. For competitors, list actual company names if you recognize the space.",
-  ];
+    "Be specific in your analysis. For competitors, list actual company names if you recognize the space."
+  );
+
   return lines.join("\n");
 }
 
-/**
- * Result type for enrichment operations.
- * Returns either success with data, or failure with error message.
- * This pattern ensures errors are reported rather than thrown,
- * allowing batch operations to continue processing other filings.
- */
 export interface EnrichmentResult {
   success: boolean;
   data?: FilingEnrichment;
   error?: string;
 }
 
-/**
- * Enrich a filing with AI-generated analysis using Vercel AI SDK + OpenRouter.
- *
- * Generates structured output including company summary, relevance score,
- * reasoning, estimated headcount, growth signals, and competitors.
- *
- * Retries once on failure (API error, invalid JSON, or schema validation error).
- * Returns a result object instead of throwing to allow batch operations to
- * continue processing when individual filings fail.
- */
+export interface EnrichFilingOptions {
+  profile?: ScoringProfile;
+  websiteContent?: string;
+}
+
 export async function enrichFiling(
-  filing: EnrichmentInput
+  filing: EnrichmentInput,
+  options?: EnrichFilingOptions
 ): Promise<EnrichmentResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
@@ -129,14 +140,12 @@ export async function enrichFiling(
   }
 
   const openrouter = createOpenRouter({ apiKey });
-  const model = openrouter(
-    process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini"
-  );
-  const prompt = buildEnrichmentPrompt(filing);
+  const model = openrouter(process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini");
+  const profile = options?.profile ?? DEFAULT_SCORING_PROFILE;
+  const prompt = buildDynamicEnrichmentPrompt(filing, profile, options?.websiteContent);
 
   let lastError: string = "Unknown error";
 
-  // Attempt up to 2 times (initial + 1 retry)
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const result = await generateObject({
@@ -146,7 +155,6 @@ export async function enrichFiling(
         temperature: 0.3,
       });
 
-      // Validate the result matches our expected types
       const enrichment: FilingEnrichment = {
         companySummary: result.object.companySummary,
         relevanceScore: result.object.relevanceScore,
@@ -154,14 +162,13 @@ export async function enrichFiling(
         estimatedHeadcount: result.object.estimatedHeadcount,
         growthSignals: result.object.growthSignals,
         competitors: result.object.competitors,
+        officeSpaceLikelihood: result.object.officeSpaceLikelihood,
       };
 
       return { success: true, data: enrichment };
     } catch (error) {
-      // Capture error message for reporting
       if (error instanceof Error) {
         lastError = error.message;
-        // Check for JSON parse errors specifically
         if (
           error.message.includes("JSON") ||
           error.message.includes("parse") ||
@@ -173,23 +180,18 @@ export async function enrichFiling(
         lastError = String(error);
       }
 
-      // Only retry once - add brief delay before retry
       if (attempt === 0) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
   }
 
-  // Return error instead of throwing - allows batch to continue
   return {
     success: false,
     error: `Failed to enrich filing after 2 attempts: ${lastError}`,
   };
 }
 
-/**
- * Get the model name used for enrichment (for storing in filingEnrichments.modelUsed).
- */
 export function getEnrichmentModelName(): string {
   return process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini";
 }

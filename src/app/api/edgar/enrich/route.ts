@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { formDFilings, filingEnrichments } from "@/lib/schema";
 import { eq, isNull } from "drizzle-orm";
 import {
   enrichFiling,
   getEnrichmentModelName,
   type EnrichmentInput,
+  type ScoringProfile,
+  DEFAULT_SCORING_PROFILE,
 } from "@/lib/ai/enrichment";
+import { db } from "@/lib/db";
+import { formDFilings, filingEnrichments, teamProfiles } from "@/lib/schema";
 
-/**
- * POST /api/edgar/enrich
- *
- * Enrich filings with AI-generated analysis.
- * - If filingId is provided, enrich that specific filing
- * - Otherwise, batch-enrich all unenriched filings (batches of 10, 2-second delays)
- *
- * Protected by x-api-key header checked against INGEST_API_KEY env var.
- */
+async function getScoringProfile(userId?: string): Promise<ScoringProfile> {
+  if (!userId) {
+    return DEFAULT_SCORING_PROFILE;
+  }
+
+  try {
+    const [profile] = await db
+      .select()
+      .from(teamProfiles)
+      .where(eq(teamProfiles.userId, userId))
+      .limit(1);
+
+    if (profile?.scoringCriteria) {
+      return {
+        targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
+        targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
+        idealCompanyProfile:
+          profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
+        scoringCriteria: profile.scoringCriteria,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching team profile:", error);
+  }
+
+  return DEFAULT_SCORING_PROFILE;
+}
+
 export async function POST(request: NextRequest) {
-  // Validate API key
   const apiKey = request.headers.get("x-api-key");
   const expectedApiKey = process.env.INGEST_API_KEY;
 
@@ -26,7 +46,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check if OpenRouter API key is configured
   if (!process.env.OPENROUTER_API_KEY) {
     return NextResponse.json(
       { error: "OPENROUTER_API_KEY environment variable is not configured" },
@@ -36,21 +55,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { filingId } = body;
+    const { filingId, profileId } = body;
 
+    const profile = await getScoringProfile(profileId ?? undefined);
     const enriched: string[] = [];
     const errors: { filingId: string; error: string }[] = [];
 
     if (filingId) {
-      // Enrich a specific filing
-      const result = await enrichSingleFiling(filingId);
+      const result = await enrichSingleFiling(filingId, profile);
       if (result.success) {
         enriched.push(filingId);
       } else {
         errors.push({ filingId, error: result.error ?? "Unknown error" });
       }
     } else {
-      // Batch enrich all unenriched filings
       const unenrichedFilings = await db
         .select({
           id: formDFilings.id,
@@ -71,26 +89,21 @@ export async function POST(request: NextRequest) {
           firstSaleDate: formDFilings.firstSaleDate,
         })
         .from(formDFilings)
-        .leftJoin(
-          filingEnrichments,
-          eq(formDFilings.id, filingEnrichments.filingId)
-        )
+        .leftJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId))
         .where(isNull(filingEnrichments.id))
         .limit(10);
 
-      // Process in batches with delays
       for (let i = 0; i < unenrichedFilings.length; i++) {
         const filing = unenrichedFilings[i];
         if (!filing) continue;
 
         const filingId = filing.id;
 
-        // Add 2-second delay between filings (not before the first one)
         if (i > 0) {
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
-        const result = await enrichSingleFiling(filingId);
+        const result = await enrichSingleFiling(filingId, profile);
         if (result.success) {
           enriched.push(filingId);
         } else {
@@ -113,14 +126,11 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Enrich a single filing by ID.
- */
 async function enrichSingleFiling(
-  filingId: string
+  filingId: string,
+  profile: ScoringProfile
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Fetch the filing
     const [filing] = await db
       .select()
       .from(formDFilings)
@@ -131,7 +141,6 @@ async function enrichSingleFiling(
       return { success: false, error: "Filing not found" };
     }
 
-    // Check if already enriched
     const [existing] = await db
       .select()
       .from(filingEnrichments)
@@ -142,7 +151,6 @@ async function enrichSingleFiling(
       return { success: false, error: "Filing already enriched" };
     }
 
-    // Prepare enrichment input
     const enrichmentInput: EnrichmentInput = {
       companyName: filing.companyName,
       cik: filing.cik,
@@ -161,8 +169,7 @@ async function enrichSingleFiling(
       firstSaleDate: filing.firstSaleDate,
     };
 
-    // Call AI enrichment - returns result object, never throws
-    const enrichmentResult = await enrichFiling(enrichmentInput);
+    const enrichmentResult = await enrichFiling(enrichmentInput, { profile });
 
     if (!enrichmentResult.success || !enrichmentResult.data) {
       return {
@@ -173,7 +180,6 @@ async function enrichSingleFiling(
 
     const enrichment = enrichmentResult.data;
 
-    // Store the enrichment
     await db.insert(filingEnrichments).values({
       filingId: filing.id,
       companySummary: enrichment.companySummary,
@@ -182,12 +188,12 @@ async function enrichSingleFiling(
       estimatedHeadcount: enrichment.estimatedHeadcount,
       growthSignals: enrichment.growthSignals,
       competitors: enrichment.competitors,
+      officeSpaceLikelihood: enrichment.officeSpaceLikelihood ?? null,
       modelUsed: getEnrichmentModelName(),
     });
 
     return { success: true };
   } catch (error) {
-    // Catch any database errors (not enrichment errors - those return result objects)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

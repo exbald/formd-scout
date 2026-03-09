@@ -91,6 +91,7 @@ export interface FilingEnrichment {
   estimatedHeadcount: number;
   growthSignals: string[];
   competitors: string[];
+  officeSpaceLikelihood?: "high" | "medium" | "low" | "unknown";
 }
 
 /**

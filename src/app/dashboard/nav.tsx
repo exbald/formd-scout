@@ -4,7 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { FileSearch, LayoutDashboard, FileText, Settings, LogOut, Menu, X } from "lucide-react";
+import {
+  FileSearch,
+  LayoutDashboard,
+  FileText,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  Mail,
+} from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -15,14 +24,11 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/filings", label: "Filings", icon: FileText },
+  { href: "/dashboard/outreach", label: "Outreach", icon: Mail },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-export function DashboardNav({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function DashboardNav({ children }: { children: React.ReactNode }) {
   const { data: session, isPending } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -34,11 +40,7 @@ export function DashboardNav({
     router.refresh();
   };
 
-  const userInitial = (
-    session?.user?.name?.[0] ||
-    session?.user?.email?.[0] ||
-    "U"
-  ).toUpperCase();
+  const userInitial = (session?.user?.name?.[0] || session?.user?.email?.[0] || "U").toUpperCase();
 
   // Close mobile menu when route changes
   const handleNavClick = () => {
@@ -46,29 +48,32 @@ export function DashboardNav({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
         <div className="container mx-auto flex h-16 items-center px-4">
           {/* Logo */}
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 mr-4 lg:mr-8"
+            className="mr-4 flex items-center gap-2 lg:mr-8"
             aria-label="FormD Scout - Dashboard"
           >
-            <div className="flex items-center justify-center w-8 h-8 rounded-[0.15rem] bg-primary/10">
-              <FileSearch className="h-5 w-5 text-primary" />
+            <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-[0.15rem]">
+              <FileSearch className="text-primary h-5 w-5" />
             </div>
-            <span className="text-xl font-bold text-foreground tracking-tight">
-              FormD Scout
-            </span>
+            <span className="text-foreground text-xl font-bold tracking-tight">FormD Scout</span>
           </Link>
 
           {/* Desktop Navigation - visible on md and up */}
-          <nav className="hidden md:flex items-center gap-1 flex-1" role="navigation" aria-label="Dashboard navigation">
+          <nav
+            className="hidden flex-1 items-center gap-1 md:flex"
+            role="navigation"
+            aria-label="Dashboard navigation"
+          >
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href ||
+              const isActive =
+                pathname === item.href ||
                 (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
               return (
@@ -76,9 +81,9 @@ export function DashboardNav({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-[0.15rem] text-sm font-medium transition-colors",
+                    "flex items-center gap-2 rounded-[0.15rem] px-4 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-muted/50 text-primary border-b-2 border-primary"
+                      ? "bg-muted/50 text-primary border-primary border-b-2"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                   aria-current={isActive ? "page" : undefined}
@@ -92,29 +97,25 @@ export function DashboardNav({
 
           {/* Mobile Menu Button - visible below md */}
           <button
-            className="md:hidden flex-1 flex justify-end p-2 -mr-2"
+            className="-mr-2 flex flex-1 justify-end p-2 md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
 
           {/* Desktop User section - visible on md and up */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden items-center gap-4 md:flex">
             <ModeToggle />
             {isPending ? (
-              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+              <div className="bg-muted h-8 w-8 animate-pulse rounded-full" />
             ) : session ? (
               <>
                 <div className="flex items-center gap-3">
-                  <div className="text-right hidden sm:block">
+                  <div className="hidden text-right sm:block">
                     <p className="text-sm font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{session.user?.email}</p>
+                    <p className="text-muted-foreground text-xs">{session.user?.email}</p>
                   </div>
                   <Avatar className="size-9">
                     <AvatarImage
@@ -132,7 +133,7 @@ export function DashboardNav({
                   onClick={handleSignOut}
                   className="text-muted-foreground hover:text-foreground"
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
+                  <LogOut className="mr-2 h-4 w-4" />
                   Sign Out
                 </Button>
               </>
@@ -146,11 +147,16 @@ export function DashboardNav({
 
         {/* Mobile Navigation Menu - slides down when open */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t bg-background">
-            <nav className="container mx-auto px-4 py-4 space-y-2" role="navigation" aria-label="Mobile navigation">
+          <div className="bg-background border-t md:hidden">
+            <nav
+              className="container mx-auto space-y-2 px-4 py-4"
+              role="navigation"
+              aria-label="Mobile navigation"
+            >
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href ||
+                const isActive =
+                  pathname === item.href ||
                   (item.href !== "/dashboard" && pathname.startsWith(item.href));
 
                 return (
@@ -159,9 +165,9 @@ export function DashboardNav({
                     href={item.href}
                     onClick={handleNavClick}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-[0.15rem] text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-[0.15rem] px-4 py-3 text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-muted/50 text-primary border-l-4 border-primary"
+                        ? "bg-muted/50 text-primary border-primary border-l-4"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                     aria-current={isActive ? "page" : undefined}
@@ -176,17 +182,17 @@ export function DashboardNav({
 
               {/* Theme Toggle */}
               <div className="flex items-center gap-3 px-4 py-2">
-                <span className="text-sm text-muted-foreground">Theme</span>
+                <span className="text-muted-foreground text-sm">Theme</span>
                 <ModeToggle />
               </div>
 
               {/* Mobile User Section */}
               {isPending ? (
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
+                  <div className="bg-muted h-9 w-9 animate-pulse rounded-full" />
                   <div className="space-y-1">
-                    <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-                    <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                    <div className="bg-muted h-4 w-24 animate-pulse rounded" />
+                    <div className="bg-muted h-3 w-32 animate-pulse rounded" />
                   </div>
                 </div>
               ) : session ? (
@@ -202,7 +208,7 @@ export function DashboardNav({
                     </Avatar>
                     <div>
                       <p className="text-sm font-medium">{session.user?.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user?.email}</p>
+                      <p className="text-muted-foreground text-xs">{session.user?.email}</p>
                     </div>
                   </div>
                   <button
@@ -210,7 +216,7 @@ export function DashboardNav({
                       setMobileMenuOpen(false);
                       handleSignOut();
                     }}
-                    className="flex items-center gap-3 px-4 py-3 rounded-[0.15rem] text-sm font-medium w-full text-left text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className="text-muted-foreground hover:text-foreground hover:bg-muted flex w-full items-center gap-3 rounded-[0.15rem] px-4 py-3 text-left text-sm font-medium transition-colors"
                   >
                     <LogOut className="h-5 w-5" />
                     Sign Out
@@ -222,7 +228,9 @@ export function DashboardNav({
                   onClick={handleNavClick}
                   className="flex items-center justify-center px-4 py-3"
                 >
-                  <Button size="sm" className="w-full">Sign In</Button>
+                  <Button size="sm" className="w-full">
+                    Sign In
+                  </Button>
                 </Link>
               )}
             </nav>
@@ -235,14 +243,14 @@ export function DashboardNav({
         {children}
       </main>
 
-      <footer className="border-t py-6 text-center text-sm text-muted-foreground mt-auto">
-        <div className="container mx-auto px-4 flex flex-col items-center gap-2">
+      <footer className="text-muted-foreground mt-auto border-t py-6 text-center text-sm">
+        <div className="container mx-auto flex flex-col items-center gap-2 px-4">
           <p>FormD Scout &mdash; SEC EDGAR Form D Filing Monitor</p>
-          <a 
-            href="https://zerodraft.studio" 
-            target="_blank" 
+          <a
+            href="https://zerodraft.studio"
+            target="_blank"
             rel="noopener noreferrer"
-            className="text-[10px] opacity-20 hover:opacity-100 transition-opacity"
+            className="text-[10px] opacity-20 transition-opacity hover:opacity-100"
           >
             zerodraft.studio
           </a>

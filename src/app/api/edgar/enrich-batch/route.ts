@@ -1,28 +1,53 @@
 import { headers } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
+import {
+  enrichFiling,
+  getEnrichmentModelName,
+  type ScoringProfile,
+  DEFAULT_SCORING_PROFILE,
+} from "@/lib/ai/enrichment";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formDFilings, filingEnrichments } from "@/lib/schema";
-import { enrichFiling, getEnrichmentModelName } from "@/lib/ai/enrichment";
+import { formDFilings, filingEnrichments, teamProfiles } from "@/lib/schema";
 
-/**
- * POST /api/edgar/enrich-batch
- *
- * Triggers AI enrichment for up to 20 unenriched filings.
- * Uses Better Auth session (not INGEST_API_KEY).
- *
- * Response: { enriched, errors, remaining }
- */
-export async function POST() {
+async function getScoringProfileForUser(userId: string): Promise<ScoringProfile> {
+  try {
+    const [profile] = await db
+      .select()
+      .from(teamProfiles)
+      .where(eq(teamProfiles.userId, userId))
+      .limit(1);
+
+    if (profile?.scoringCriteria) {
+      return {
+        targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
+        targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
+        idealCompanyProfile:
+          profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
+        scoringCriteria: profile.scoringCriteria,
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching team profile:", error);
+  }
+
+  return DEFAULT_SCORING_PROFILE;
+}
+
+export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const profile = await getScoringProfileForUser(session.user.id);
+
   try {
-    // Find up to 20 unenriched filings (no matching row in filingEnrichments)
-    const unenrichedFilings = await db
+    const body = await request.json().catch(() => ({}));
+    const { rescoreAll } = body;
+
+    let query = db
       .select({
         id: formDFilings.id,
         companyName: formDFilings.companyName,
@@ -40,33 +65,47 @@ export async function POST() {
         federalExemptions: formDFilings.federalExemptions,
         yetToOccur: formDFilings.yetToOccur,
         firstSaleDate: formDFilings.firstSaleDate,
+        enrichmentId: filingEnrichments.id,
       })
       .from(formDFilings)
-      .leftJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId))
-      .where(sql`${filingEnrichments.id} IS NULL`)
-      .limit(20);
+      .leftJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId));
+
+    if (rescoreAll) {
+      query = query.limit(20) as typeof query;
+    } else {
+      query = query.where(sql`${filingEnrichments.id} IS NULL`).limit(20) as typeof query;
+    }
+
+    const filings = await query;
 
     let enriched = 0;
     let errors = 0;
 
-    for (const filing of unenrichedFilings) {
-      const result = await enrichFiling({
-        companyName: filing.companyName,
-        cik: filing.cik,
-        entityType: filing.entityType,
-        industryGroup: filing.industryGroup,
-        totalOffering: filing.totalOffering,
-        amountSold: filing.amountSold,
-        numInvestors: filing.numInvestors,
-        revenueRange: filing.revenueRange,
-        issuerCity: filing.issuerCity,
-        issuerState: filing.issuerState,
-        isAmendment: filing.isAmendment,
-        filingDate: filing.filingDate,
-        federalExemptions: filing.federalExemptions,
-        yetToOccur: filing.yetToOccur,
-        firstSaleDate: filing.firstSaleDate,
-      });
+    for (const filing of filings) {
+      if (rescoreAll && filing.enrichmentId) {
+        await db.delete(filingEnrichments).where(eq(filingEnrichments.id, filing.enrichmentId));
+      }
+
+      const result = await enrichFiling(
+        {
+          companyName: filing.companyName,
+          cik: filing.cik,
+          entityType: filing.entityType,
+          industryGroup: filing.industryGroup,
+          totalOffering: filing.totalOffering,
+          amountSold: filing.amountSold,
+          numInvestors: filing.numInvestors,
+          revenueRange: filing.revenueRange,
+          issuerCity: filing.issuerCity,
+          issuerState: filing.issuerState,
+          isAmendment: filing.isAmendment,
+          filingDate: filing.filingDate,
+          federalExemptions: filing.federalExemptions,
+          yetToOccur: filing.yetToOccur,
+          firstSaleDate: filing.firstSaleDate,
+        },
+        { profile }
+      );
 
       if (result.success && result.data) {
         try {
@@ -78,6 +117,7 @@ export async function POST() {
             estimatedHeadcount: result.data.estimatedHeadcount,
             growthSignals: result.data.growthSignals,
             competitors: result.data.competitors,
+            officeSpaceLikelihood: result.data.officeSpaceLikelihood ?? null,
             modelUsed: getEnrichmentModelName(),
           });
           enriched++;
@@ -90,13 +130,11 @@ export async function POST() {
         errors++;
       }
 
-      // 2-second delay between filings to avoid OpenRouter rate limits
-      if (unenrichedFilings.indexOf(filing) < unenrichedFilings.length - 1) {
+      if (filings.indexOf(filing) < filings.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
 
-    // Count remaining unenriched filings
     const remainingResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(formDFilings)
@@ -104,12 +142,9 @@ export async function POST() {
       .where(sql`${filingEnrichments.id} IS NULL`);
     const remaining = remainingResult[0]?.count ?? 0;
 
-    return NextResponse.json({ enriched, errors, remaining });
+    return NextResponse.json({ enriched, errors, remaining, rescored: rescoreAll || false });
   } catch (error) {
     console.error("Batch enrichment error:", error);
-    return NextResponse.json(
-      { error: "Failed to process batch enrichment" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to process batch enrichment" }, { status: 500 });
   }
 }

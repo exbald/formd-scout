@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useSession } from "@/lib/auth-client";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   FileText,
   Search,
@@ -29,22 +28,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatDollarAmount } from "@/lib/format-currency";
-import { formatDate } from "@/lib/format-date";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +40,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FilterGroup } from "@/components/ui/filter-group";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSession } from "@/lib/auth-client";
+import { formatDollarAmount } from "@/lib/format-currency";
+import { formatDate } from "@/lib/format-date";
+import { getRelevanceBadgeClass } from "@/lib/relevance-styles";
 
 // Industry group options
 const INDUSTRY_GROUPS = [
@@ -165,28 +167,32 @@ const formatCurrency = (amount: number | null | undefined): string => {
   return formatDollarAmount(amount);
 };
 
-const getRelevanceBadgeClass = (score: number | null): string => {
-  if (score === null) return "";
-  // Green badge for high relevance (70-100)
-  if (score >= 70) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800";
-  // Yellow/Amber badge for medium relevance (40-69)
-  if (score >= 40) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800";
-  // Gray badge for low relevance (1-39)
-  return "bg-gray-100 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400 border-gray-200 dark:border-gray-700";
-};
-
-// Sortable column type
-type SortableColumn = "companyName" | "filingDate" | "totalOffering" | "industryGroup" | "issuerState" | "relevanceScore" | "estimatedHeadcount";
+type SortableColumn =
+  | "companyName"
+  | "filingDate"
+  | "totalOffering"
+  | "industryGroup"
+  | "issuerState"
+  | "relevanceScore"
+  | "estimatedHeadcount";
 
 // Sort indicator component
-const SortIndicator = ({ column, currentSortBy, currentSortOrder }: { column: SortableColumn; currentSortBy: string; currentSortOrder: string }) => {
+const SortIndicator = ({
+  column,
+  currentSortBy,
+  currentSortOrder,
+}: {
+  column: SortableColumn;
+  currentSortBy: string;
+  currentSortOrder: string;
+}) => {
   if (currentSortBy !== column) {
-    return <ArrowUpDown className="h-4 w-4 ml-1 opacity-40" />;
+    return <ArrowUpDown className="ml-1 h-4 w-4 opacity-40" />;
   }
   return currentSortOrder === "asc" ? (
-    <ArrowUp className="h-4 w-4 ml-1 text-primary" />
+    <ArrowUp className="text-primary ml-1 h-4 w-4" />
   ) : (
-    <ArrowDown className="h-4 w-4 ml-1 text-primary" />
+    <ArrowDown className="text-primary ml-1 h-4 w-4" />
   );
 };
 
@@ -197,43 +203,25 @@ export default function FilingsPage() {
 
   // Filter state
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [startDate, setStartDate] = useState(
-    searchParams.get("startDate") || ""
-  );
+  const [startDate, setStartDate] = useState(searchParams.get("startDate") || "");
   const [endDate, setEndDate] = useState(searchParams.get("endDate") || "");
-  const [minOffering, setMinOffering] = useState(
-    searchParams.get("minOffering") || ""
-  );
-  const [maxOffering, setMaxOffering] = useState(
-    searchParams.get("maxOffering") || ""
-  );
+  const [minOffering, setMinOffering] = useState(searchParams.get("minOffering") || "");
+  const [maxOffering, setMaxOffering] = useState(searchParams.get("maxOffering") || "");
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>(
     searchParams.get("industryGroup")?.split(",").filter(Boolean) || []
   );
   const [selectedStates, setSelectedStates] = useState<string[]>(
     searchParams.get("state")?.split(",").filter(Boolean) || []
   );
-  const [minRelevance, setMinRelevance] = useState(
-    searchParams.get("minRelevance") || ""
-  );
-  const [minHeadcount, setMinHeadcount] = useState(
-    searchParams.get("minHeadcount") || ""
-  );
-  const [isAmendment, setIsAmendment] = useState(
-    searchParams.get("isAmendment") || "all"
-  );
-  const [yetToOccur, setYetToOccur] = useState(
-    searchParams.get("yetToOccur") === "true"
-  );
+  const [minRelevance, setMinRelevance] = useState(searchParams.get("minRelevance") || "");
+  const [minHeadcount, setMinHeadcount] = useState(searchParams.get("minHeadcount") || "");
+  const [isAmendment, setIsAmendment] = useState(searchParams.get("isAmendment") || "all");
+  const [yetToOccur, setYetToOccur] = useState(searchParams.get("yetToOccur") === "true");
 
   // Pagination state
-  const [page, setPage] = useState(
-    parseInt(searchParams.get("page") || "1", 10)
-  );
+  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1", 10));
   const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "filingDate");
-  const [sortOrder, setSortOrder] = useState(
-    searchParams.get("sortOrder") || "desc"
-  );
+  const [sortOrder, setSortOrder] = useState(searchParams.get("sortOrder") || "desc");
 
   // Data state
   const [filings, setFilings] = useState<Filing[]>([]);
@@ -318,10 +306,8 @@ export default function FilingsPage() {
       if (endDate) params.set("endDate", endDate);
       if (minOffering) params.set("minOffering", minOffering);
       if (maxOffering) params.set("maxOffering", maxOffering);
-      if (selectedIndustries.length > 0)
-        params.set("industryGroup", selectedIndustries.join(","));
-      if (selectedStates.length > 0)
-        params.set("state", selectedStates.join(","));
+      if (selectedIndustries.length > 0) params.set("industryGroup", selectedIndustries.join(","));
+      if (selectedStates.length > 0) params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
       if (minHeadcount) params.set("minHeadcount", minHeadcount);
       if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
@@ -621,10 +607,8 @@ export default function FilingsPage() {
       if (endDate) params.set("endDate", endDate);
       if (minOffering) params.set("minOffering", minOffering);
       if (maxOffering) params.set("maxOffering", maxOffering);
-      if (selectedIndustries.length > 0)
-        params.set("industryGroup", selectedIndustries.join(","));
-      if (selectedStates.length > 0)
-        params.set("state", selectedStates.join(","));
+      if (selectedIndustries.length > 0) params.set("industryGroup", selectedIndustries.join(","));
+      if (selectedStates.length > 0) params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
       if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
@@ -664,10 +648,8 @@ export default function FilingsPage() {
       if (endDate) params.set("endDate", endDate);
       if (minOffering) params.set("minOffering", minOffering);
       if (maxOffering) params.set("maxOffering", maxOffering);
-      if (selectedIndustries.length > 0)
-        params.set("industryGroup", selectedIndustries.join(","));
-      if (selectedStates.length > 0)
-        params.set("state", selectedStates.join(","));
+      if (selectedIndustries.length > 0) params.set("industryGroup", selectedIndustries.join(","));
+      if (selectedStates.length > 0) params.set("state", selectedStates.join(","));
       if (minRelevance) params.set("minRelevance", minRelevance);
       if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
@@ -700,7 +682,9 @@ export default function FilingsPage() {
         lines.push(`   Offering: ${formatCurrency(filing.totalOffering)}`);
         lines.push(`   Industry: ${filing.industryGroup || "N/A"}`);
         lines.push(`   State: ${filing.issuerState || "N/A"}`);
-        lines.push(`   Relevance: ${filing.relevanceScore !== null ? filing.relevanceScore : "N/A"}`);
+        lines.push(
+          `   Relevance: ${filing.relevanceScore !== null ? filing.relevanceScore : "N/A"}`
+        );
         lines.push(`   Status: ${filing.isAmendment ? "Amendment" : "New"}`);
         lines.push("");
       });
@@ -712,7 +696,9 @@ export default function FilingsPage() {
         activeFilters.push(`Date Range: ${startDate || "any"} to ${endDate || "any"}`);
       }
       if (minOffering || maxOffering) {
-        activeFilters.push(`Offering: ${minOffering ? formatCurrency(parseInt(minOffering)) : "any"} - ${maxOffering ? formatCurrency(parseInt(maxOffering)) : "any"}`);
+        activeFilters.push(
+          `Offering: ${minOffering ? formatCurrency(parseInt(minOffering)) : "any"} - ${maxOffering ? formatCurrency(parseInt(maxOffering)) : "any"}`
+        );
       }
       if (selectedIndustries.length > 0) {
         activeFilters.push(`Industries: ${selectedIndustries.join(", ")}`);
@@ -727,7 +713,7 @@ export default function FilingsPage() {
       if (activeFilters.length > 0) {
         lines.push("-".repeat(50));
         lines.push("Active Filters:");
-        activeFilters.forEach(f => lines.push(`  • ${f}`));
+        activeFilters.forEach((f) => lines.push(`  • ${f}`));
       }
 
       const summaryText = lines.join("\n");
@@ -750,7 +736,9 @@ export default function FilingsPage() {
         throw new Error(errorData.error || "Failed to enrich filings");
       }
       const data = await response.json();
-      toast.success(`Enriched ${data.enriched} filing${data.enriched !== 1 ? "s" : ""}. ${data.remaining} remaining.`);
+      toast.success(
+        `Enriched ${data.enriched} filing${data.enriched !== 1 ? "s" : ""}. ${data.remaining} remaining.`
+      );
       fetchFilings();
     } catch (error) {
       console.error("Error enriching filings:", error);
@@ -790,27 +778,30 @@ export default function FilingsPage() {
   // Gate: require authentication to view the full filings list
   if (!sessionPending && !session) {
     return (
-      <div className="max-w-lg mx-auto mt-16 text-center space-y-6 px-4">
-        <div className="flex items-center justify-center w-16 h-16 rounded-[0.15rem] bg-primary/10 mx-auto">
-          <FileText className="h-8 w-8 text-primary" />
+      <div className="mx-auto mt-16 max-w-lg space-y-6 px-4 text-center">
+        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-[0.15rem]">
+          <FileText className="text-primary h-8 w-8" />
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-bold">Sign in to access Filings</h2>
           <p className="text-muted-foreground">
-            The full filings list with advanced filters, CSV export, and AI
-            enrichment is available to registered users. Create a free account
-            to get started.
+            The full filings list with advanced filters, CSV export, and AI enrichment is available
+            to registered users. Create a free account to get started.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Link href="/register">
-            <Button size="lg" className="w-full sm:w-auto">Create free account</Button>
+            <Button size="lg" className="w-full sm:w-auto">
+              Create free account
+            </Button>
           </Link>
           <Link href="/login">
-            <Button size="lg" variant="outline" className="w-full sm:w-auto">Sign in</Button>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              Sign in
+            </Button>
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Already browsing?{" "}
           <Link href="/dashboard" className="text-primary hover:underline">
             Go back to dashboard
@@ -822,15 +813,15 @@ export default function FilingsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+    <div className="mx-auto max-w-7xl space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border pb-4 mb-2">
+      <div className="border-border mb-2 flex items-center justify-between border-b pb-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <FileText className="h-5 w-5 text-primary" />
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+            <FileText className="text-primary h-5 w-5" />
             SEC Form D Filings
           </h1>
-          <p className="text-muted-foreground mt-1 text-xs uppercase tracking-widest font-semibold">
+          <p className="text-muted-foreground mt-1 text-xs font-semibold tracking-widest uppercase">
             Browse and filter Form D filings from the SEC EDGAR database
           </p>
         </div>
@@ -841,7 +832,7 @@ export default function FilingsPage() {
         <CardContent className="p-3 md:p-4">
           {/* Filter Header - always visible, clickable on mobile to expand */}
           <button
-            className="flex items-center justify-between w-full md:w-auto md:pointer-events-none focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-[0.15rem]"
+            className="focus-visible:ring-ring flex w-full items-center justify-between rounded-[0.15rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:pointer-events-none md:w-auto"
             onClick={() => setFiltersExpanded(!filtersExpanded)}
             aria-expanded={filtersExpanded}
             aria-controls="filter-controls"
@@ -859,187 +850,265 @@ export default function FilingsPage() {
             {/* Chevron indicator - only on mobile */}
             <div className="md:hidden">
               {filtersExpanded ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                <ChevronUp className="text-muted-foreground h-5 w-5" />
               ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                <ChevronDown className="text-muted-foreground h-5 w-5" />
               )}
             </div>
           </button>
 
-          {/* Filter Grid - collapsible on mobile, always visible on desktop */}
-          <div id="filter-controls" className={`mt-4 ${filtersExpanded ? "block" : "hidden"} md:block`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {/* Search */}
-            <div className="space-y-2">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Company name..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-                {search && (
-                  <button
-                    onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    aria-label="Clear search"
-                  >
-                    <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                  </button>
+          {/* Filter Groups - collapsible on mobile, always visible on desktop */}
+          <div
+            id="filter-controls"
+            className={`mt-2 ${filtersExpanded ? "block" : "hidden"} md:block`}
+          >
+            <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+              {/* Search Group */}
+              <FilterGroup
+                title="Search"
+                badge={
+                  search ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <div className="relative">
+                  <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                  <Input
+                    id="search"
+                    placeholder="Company name..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                  {search && (
+                    <button
+                      onClick={() => setSearch("")}
+                      className="absolute top-1/2 right-3 -translate-y-1/2"
+                      aria-label="Clear search"
+                    >
+                      <X className="text-muted-foreground hover:text-foreground h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </FilterGroup>
+
+              {/* Date Range Group */}
+              <FilterGroup
+                title="Date Range"
+                badge={
+                  startDate || endDate ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="startDate" className="text-xs">
+                      Start
+                    </Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className={dateRangeError ? "border-destructive" : ""}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="endDate" className="text-xs">
+                      End
+                    </Label>
+                    <Input
+                      id="endDate"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className={dateRangeError ? "border-destructive" : ""}
+                    />
+                  </div>
+                </div>
+                {dateRangeError && (
+                  <p className="text-destructive mt-1 flex items-center gap-1 text-xs">
+                    <AlertCircle className="h-3 w-3" />
+                    {dateRangeError}
+                  </p>
                 )}
-              </div>
-            </div>
+              </FilterGroup>
 
-            {/* Start Date */}
-            <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className={dateRangeError ? "border-destructive" : ""}
-              />
-            </div>
+              {/* Deal Size Group */}
+              <FilterGroup
+                title="Deal Size"
+                badge={
+                  minOffering || maxOffering ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="minOffering" className="text-xs">
+                      Min ($)
+                    </Label>
+                    <Input
+                      id="minOffering"
+                      type="number"
+                      placeholder="0"
+                      value={minOffering}
+                      onChange={(e) => setMinOffering(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="maxOffering" className="text-xs">
+                      Max ($)
+                    </Label>
+                    <Input
+                      id="maxOffering"
+                      type="number"
+                      placeholder="No limit"
+                      value={maxOffering}
+                      onChange={(e) => setMaxOffering(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </FilterGroup>
 
-            {/* End Date */}
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className={dateRangeError ? "border-destructive" : ""}
-              />
-            </div>
+              {/* Target Profile Group */}
+              <FilterGroup
+                title="Target Profile"
+                badge={
+                  selectedIndustries.length > 0 || selectedStates.length > 0 ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="industry-select" className="text-xs">
+                      Industry
+                    </Label>
+                    <MultiSelect
+                      id="industry-select"
+                      options={INDUSTRY_GROUPS}
+                      selected={selectedIndustries}
+                      onChange={setSelectedIndustries}
+                      placeholder="Select industries..."
+                      ariaLabel="Select industries"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="state-select" className="text-xs">
+                      State
+                    </Label>
+                    <MultiSelect
+                      id="state-select"
+                      options={US_STATES}
+                      selected={selectedStates}
+                      onChange={setSelectedStates}
+                      placeholder="Select states..."
+                      ariaLabel="Select states"
+                    />
+                  </div>
+                </div>
+              </FilterGroup>
 
-            {/* Date Range Error Message - spans the date columns */}
-            {dateRangeError && (
-              <div className="col-span-1 md:col-span-2 -mt-2">
-                <p className="text-sm text-destructive flex items-center gap-1">
-                  <AlertCircle className="h-3.5 w-3.5" />
-                  {dateRangeError}
-                </p>
-              </div>
-            )}
+              {/* Quality Filters Group */}
+              <FilterGroup
+                title="Quality Filters"
+                badge={
+                  minRelevance || minHeadcount ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="minRelevance" className="text-xs">
+                      Min Relevance
+                    </Label>
+                    <Input
+                      id="minRelevance"
+                      type="number"
+                      min="1"
+                      max="100"
+                      placeholder="1-100"
+                      value={minRelevance}
+                      onChange={(e) => setMinRelevance(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="minHeadcount" className="text-xs">
+                      Min Head Count
+                    </Label>
+                    <Input
+                      id="minHeadcount"
+                      type="number"
+                      min="1"
+                      placeholder="Any"
+                      value={minHeadcount}
+                      onChange={(e) => setMinHeadcount(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </FilterGroup>
 
-            {/* Min Offering */}
-            <div className="space-y-2">
-              <Label htmlFor="minOffering">Min Offering ($)</Label>
-              <Input
-                id="minOffering"
-                type="number"
-                placeholder="0"
-                value={minOffering}
-                onChange={(e) => setMinOffering(e.target.value)}
-              />
+              {/* Filing Type Group */}
+              <FilterGroup
+                title="Filing Type"
+                badge={
+                  isAmendment !== "all" || yetToOccur ? (
+                    <Badge variant="secondary" className="text-xs">
+                      Active
+                    </Badge>
+                  ) : undefined
+                }
+              >
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="filing-type" className="text-xs">
+                      Type
+                    </Label>
+                    <Select value={isAmendment} onValueChange={setIsAmendment}>
+                      <SelectTrigger id="filing-type">
+                        <SelectValue placeholder="All filings" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Filings</SelectItem>
+                        <SelectItem value="false">New Only</SelectItem>
+                        <SelectItem value="true">Amendments Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="yetToOccur"
+                      checked={yetToOccur}
+                      onCheckedChange={(checked) => setYetToOccur(checked === true)}
+                    />
+                    <Label htmlFor="yetToOccur" className="ml-2 cursor-pointer text-xs">
+                      First sale yet to occur
+                    </Label>
+                  </div>
+                </div>
+              </FilterGroup>
             </div>
-
-            {/* Max Offering */}
-            <div className="space-y-2">
-              <Label htmlFor="maxOffering">Max Offering ($)</Label>
-              <Input
-                id="maxOffering"
-                type="number"
-                placeholder="No limit"
-                value={maxOffering}
-                onChange={(e) => setMaxOffering(e.target.value)}
-              />
-            </div>
-
-            {/* Industry Multi-Select */}
-            <div className="space-y-2">
-              <Label htmlFor="industry-select">Industry</Label>
-              <MultiSelect
-                id="industry-select"
-                options={INDUSTRY_GROUPS}
-                selected={selectedIndustries}
-                onChange={setSelectedIndustries}
-                placeholder="Select industries..."
-                ariaLabel="Select industries"
-              />
-            </div>
-
-            {/* State Multi-Select */}
-            <div className="space-y-2">
-              <Label htmlFor="state-select">State</Label>
-              <MultiSelect
-                id="state-select"
-                options={US_STATES}
-                selected={selectedStates}
-                onChange={setSelectedStates}
-                placeholder="Select states..."
-                ariaLabel="Select states"
-              />
-            </div>
-
-            {/* Min Relevance */}
-            <div className="space-y-2">
-              <Label htmlFor="minRelevance">Min Relevance (1-100)</Label>
-              <Input
-                id="minRelevance"
-                type="number"
-                min="1"
-                max="100"
-                placeholder="1"
-                value={minRelevance}
-                onChange={(e) => setMinRelevance(e.target.value)}
-              />
-            </div>
-
-            {/* Min Head Count */}
-            <div className="space-y-2">
-              <Label htmlFor="minHeadcount">Min Head Count</Label>
-              <Input
-                id="minHeadcount"
-                type="number"
-                min="1"
-                placeholder="Any"
-                value={minHeadcount}
-                onChange={(e) => setMinHeadcount(e.target.value)}
-              />
-            </div>
-
-            {/* Amendment Toggle */}
-            <div className="space-y-2">
-              <Label htmlFor="filing-type">Filing Type</Label>
-              <Select value={isAmendment} onValueChange={setIsAmendment}>
-                <SelectTrigger id="filing-type">
-                  <SelectValue placeholder="All filings" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Filings</SelectItem>
-                  <SelectItem value="false">New Only</SelectItem>
-                  <SelectItem value="true">Amendments Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Yet to Occur Toggle */}
-            <div className="space-y-2">
-              <div className="flex items-center pt-6">
-                <Checkbox
-                  id="yetToOccur"
-                  checked={yetToOccur}
-                  onCheckedChange={(checked) => setYetToOccur(checked === true)}
-                />
-                <Label htmlFor="yetToOccur" className="ml-2 cursor-pointer">
-                  First sale yet to occur
-                </Label>
-              </div>
-            </div>
-          </div>
           </div>
 
           {/* Action Buttons - scrollable on mobile */}
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t overflow-x-auto pb-1 -mb-1 md:flex-wrap md:overflow-visible md:pb-0 md:mb-0">
+          <div className="mt-4 -mb-1 flex items-center gap-2 overflow-x-auto border-t pt-4 pb-1 md:mb-0 md:flex-wrap md:overflow-visible md:pb-0">
             {/* Saved Filters Dropdown */}
             {savedFilters.length > 0 && (
-              <div className="relative saved-filters-dropdown shrink-0">
+              <div className="saved-filters-dropdown relative shrink-0">
                 <Button
                   variant="outline"
                   size="sm"
@@ -1048,27 +1117,30 @@ export default function FilingsPage() {
                   aria-haspopup="menu"
                   className="relative"
                 >
-                  <Bookmark className="h-4 w-4 mr-2" />
+                  <Bookmark className="mr-2 h-4 w-4" />
                   Saved Filters
                 </Button>
                 {savedFiltersOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-popover border rounded-[0.15rem] shadow-lg z-50" role="menu">
+                  <div
+                    className="bg-popover absolute top-full left-0 z-50 mt-1 w-64 rounded-[0.15rem] border shadow-lg"
+                    role="menu"
+                  >
                     {savedFilters.map((filter) => (
                       <div
                         key={filter.id}
-                        className="flex items-center justify-between p-2 hover:bg-muted/50 border-b last:border-b-0"
+                        className="hover:bg-muted/50 flex items-center justify-between border-b p-2 last:border-b-0"
                         role="menuitem"
                       >
                         <button
                           onClick={() => handleLoadFilter(filter)}
-                          className="flex-1 text-left text-sm truncate hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded px-1"
+                          className="hover:text-primary focus-visible:ring-ring flex-1 truncate rounded px-1 text-left text-sm focus:outline-none focus-visible:ring-2"
                           aria-label={`Load filter: ${filter.filterName}`}
                         >
                           {filter.filterName}
                         </button>
                         <button
                           onClick={() => openDeleteDialog(filter.id)}
-                          className="p-1 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive focus-visible:ring-ring rounded p-1 focus:outline-none focus-visible:ring-2"
                           aria-label={`Delete filter: ${filter.filterName}`}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1086,7 +1158,7 @@ export default function FilingsPage() {
               disabled={!hasActiveFilters}
               className="shrink-0"
             >
-              <RotateCcw className="h-4 w-4 mr-2" />
+              <RotateCcw className="mr-2 h-4 w-4" />
               Clear
             </Button>
             <Button
@@ -1096,7 +1168,7 @@ export default function FilingsPage() {
               disabled={!hasActiveFilters}
               className="shrink-0"
             >
-              <Save className="h-4 w-4 mr-2" />
+              <Save className="mr-2 h-4 w-4" />
               Save
             </Button>
             <Button
@@ -1107,11 +1179,13 @@ export default function FilingsPage() {
               className="shrink-0"
             >
               {isExporting ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="mr-2 h-4 w-4" />
               )}
-              <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Export CSV"}</span>
+              <span className="hidden sm:inline">
+                {isExporting ? "Exporting..." : "Export CSV"}
+              </span>
               <span className="sm:hidden">Export</span>
             </Button>
             <Button
@@ -1121,7 +1195,7 @@ export default function FilingsPage() {
               disabled={isLoading || filings.length === 0}
               className="shrink-0"
             >
-              <Copy className="h-4 w-4 mr-2" />
+              <Copy className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Copy Summary</span>
               <span className="sm:hidden">Copy</span>
             </Button>
@@ -1133,11 +1207,13 @@ export default function FilingsPage() {
               className="shrink-0"
             >
               {isEnriching ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="mr-2 h-4 w-4" />
               )}
-              <span className="hidden sm:inline">{isEnriching ? "Enriching..." : "Enrich All"}</span>
+              <span className="hidden sm:inline">
+                {isEnriching ? "Enriching..." : "Enrich All"}
+              </span>
               <span className="sm:hidden">Enrich</span>
             </Button>
           </div>
@@ -1145,14 +1221,14 @@ export default function FilingsPage() {
       </Card>
 
       {/* Results Count and Sort */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-muted-foreground text-sm">
           {isLoading
             ? "Loading..."
             : `${pagination.total.toLocaleString()} filing${pagination.total !== 1 ? "s" : ""} found`}
         </p>
         <div className="flex items-center gap-2">
-          <Label htmlFor="sortBy" className="text-sm shrink-0">
+          <Label htmlFor="sortBy" className="shrink-0 text-sm">
             Sort:
           </Label>
           <Select value={sortBy} onValueChange={setSortBy}>
@@ -1185,17 +1261,12 @@ export default function FilingsPage() {
         <Card className="border-destructive/50 bg-destructive/5">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <AlertCircle className="text-destructive mt-0.5 h-5 w-5 shrink-0" />
               <div className="flex-1">
-                <h3 className="font-medium text-destructive">Error Loading Filings</h3>
-                <p className="text-sm text-muted-foreground mt-1">{error}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchFilings()}
-                  className="mt-3"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
+                <h3 className="text-destructive font-medium">Error Loading Filings</h3>
+                <p className="text-muted-foreground mt-1 text-sm">{error}</p>
+                <Button variant="outline" size="sm" onClick={() => fetchFilings()} className="mt-3">
+                  <RefreshCw className="mr-2 h-4 w-4" />
                   Try Again
                 </Button>
               </div>
@@ -1208,23 +1279,30 @@ export default function FilingsPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading filings...
-            </div>
+            <div className="text-muted-foreground p-8 text-center">Loading filings...</div>
           ) : error ? (
-            <div className="p-8 text-center text-muted-foreground">
+            <div className="text-muted-foreground p-8 text-center">
               Unable to load filings. Please try again.
             </div>
           ) : filings.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
+            <div className="text-muted-foreground p-8 text-center">
               {hasActiveFilters ? (
                 <div>
                   <p className="mb-2">No filings found matching your criteria.</p>
-                  <p className="text-sm">Try adjusting your filters or <button onClick={handleClearFilters} className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">clear all filters</button>.</p>
+                  <p className="text-sm">
+                    Try adjusting your filters or{" "}
+                    <button
+                      onClick={handleClearFilters}
+                      className="text-primary focus-visible:ring-ring rounded hover:underline focus:outline-none focus-visible:ring-2"
+                    >
+                      clear all filters
+                    </button>
+                    .
+                  </p>
                 </div>
               ) : (
                 <div>
-                  <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <FileText className="mx-auto mb-3 h-12 w-12 opacity-50" />
                   <p className="mb-1">No filings in the database yet.</p>
                   <p className="text-sm">Filings will appear here after data ingestion runs.</p>
                 </div>
@@ -1233,16 +1311,16 @@ export default function FilingsPage() {
           ) : (
             <>
               {/* Mobile Card View - visible below md */}
-              <div className="md:hidden divide-y">
+              <div className="divide-y md:hidden">
                 {filings.map((filing) => (
                   <button
                     key={filing.id}
-                    className="w-full p-4 text-left hover:bg-muted/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
+                    className="hover:bg-muted/50 focus-visible:ring-ring w-full p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset"
                     onClick={() => router.push(`/dashboard/filings/${filing.id}`)}
                   >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className="font-medium line-clamp-2 flex-1">{filing.companyName}</span>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <span className="line-clamp-2 flex-1 font-medium">{filing.companyName}</span>
+                      <div className="flex shrink-0 items-center gap-1.5">
                         {filing.relevanceScore !== null && (
                           <Badge
                             variant="outline"
@@ -1252,7 +1330,9 @@ export default function FilingsPage() {
                           </Badge>
                         )}
                         {filing.isAmendment ? (
-                          <Badge variant="secondary" className="text-xs">Amd</Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Amd
+                          </Badge>
                         ) : (
                           <Badge className="text-xs">New</Badge>
                         )}
@@ -1263,7 +1343,8 @@ export default function FilingsPage() {
                         <span className="text-xs">Date:</span> {formatDate(filing.filingDate)}
                       </div>
                       <div className="text-muted-foreground">
-                        <span className="text-xs">Offering:</span> {formatCurrency(filing.totalOffering)}
+                        <span className="text-xs">Offering:</span>{" "}
+                        {formatCurrency(filing.totalOffering)}
                       </div>
                       <div className="text-muted-foreground truncate">
                         <span className="text-xs">Industry:</span> {filing.industryGroup || "N/A"}
@@ -1273,7 +1354,8 @@ export default function FilingsPage() {
                       </div>
                       {filing.estimatedHeadcount !== null && (
                         <div className="text-muted-foreground">
-                          <span className="text-xs">Head Count:</span> {filing.estimatedHeadcount.toLocaleString()}
+                          <span className="text-xs">Head Count:</span>{" "}
+                          {filing.estimatedHeadcount.toLocaleString()}
                         </div>
                       )}
                     </div>
@@ -1282,89 +1364,163 @@ export default function FilingsPage() {
               </div>
 
               {/* Desktop Table View - visible on md and up */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
                       <th
                         scope="col"
-                        aria-sort={sortBy === "companyName" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "companyName"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("companyName")}
                       >
                         <div className="flex items-center">
                           Company Name
-                          <SortIndicator column="companyName" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="companyName"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
                       <th
                         scope="col"
-                        aria-sort={sortBy === "filingDate" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "filingDate"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("filingDate")}
                       >
                         <div className="flex items-center">
                           Filing Date
-                          <SortIndicator column="filingDate" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="filingDate"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
                       <th
                         scope="col"
-                        aria-sort={sortBy === "totalOffering" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "totalOffering"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("totalOffering")}
                       >
                         <div className="flex items-center">
                           Offering
-                          <SortIndicator column="totalOffering" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="totalOffering"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
                       <th
                         scope="col"
-                        aria-sort={sortBy === "industryGroup" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "industryGroup"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("industryGroup")}
                       >
                         <div className="flex items-center">
                           Industry
-                          <SortIndicator column="industryGroup" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="industryGroup"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
                       <th
                         scope="col"
-                        aria-sort={sortBy === "issuerState" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "issuerState"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("issuerState")}
                       >
                         <div className="flex items-center">
                           State
-                          <SortIndicator column="issuerState" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="issuerState"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
                       <th
                         scope="col"
-                        aria-sort={sortBy === "estimatedHeadcount" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "estimatedHeadcount"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("estimatedHeadcount")}
                       >
                         <div className="flex items-center">
                           Head Count
-                          <SortIndicator column="estimatedHeadcount" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="estimatedHeadcount"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
                       <th
                         scope="col"
-                        aria-sort={sortBy === "relevanceScore" ? (sortOrder === "asc" ? "ascending" : "descending") : "none"}
-                        className="text-left p-4 font-medium cursor-pointer hover:bg-muted/50 select-none transition-colors"
+                        aria-sort={
+                          sortBy === "relevanceScore"
+                            ? sortOrder === "asc"
+                              ? "ascending"
+                              : "descending"
+                            : "none"
+                        }
+                        className="hover:bg-muted/50 cursor-pointer p-4 text-left font-medium transition-colors select-none"
                         onClick={() => handleSort("relevanceScore")}
                       >
                         <div className="flex items-center">
                           Relevance
-                          <SortIndicator column="relevanceScore" currentSortBy={sortBy} currentSortOrder={sortOrder} />
+                          <SortIndicator
+                            column="relevanceScore"
+                            currentSortBy={sortBy}
+                            currentSortOrder={sortOrder}
+                          />
                         </div>
                       </th>
-                      <th scope="col" className="text-left p-4 font-medium">Status</th>
-                      <th scope="col" className="w-10"><span className="sr-only">View details</span></th>
+                      <th scope="col" className="p-4 text-left font-medium">
+                        Status
+                      </th>
+                      <th scope="col" className="w-10">
+                        <span className="sr-only">View details</span>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1372,10 +1528,8 @@ export default function FilingsPage() {
                       <tr
                         key={filing.id}
                         tabIndex={0}
-                        className="border-b hover:bg-muted/50 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                        onClick={() =>
-                          router.push(`/dashboard/filings/${filing.id}`)
-                        }
+                        className="hover:bg-muted/50 focus-visible:ring-ring cursor-pointer border-b transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+                        onClick={() => router.push(`/dashboard/filings/${filing.id}`)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
@@ -1386,19 +1540,15 @@ export default function FilingsPage() {
                         <td className="p-4">
                           <span className="font-medium">{filing.companyName}</span>
                         </td>
-                        <td className="p-4 text-muted-foreground">
+                        <td className="text-muted-foreground p-4">
                           {formatDate(filing.filingDate)}
                         </td>
-                        <td className="p-4">
-                          {formatCurrency(filing.totalOffering)}
-                        </td>
-                        <td className="p-4 text-muted-foreground">
+                        <td className="p-4">{formatCurrency(filing.totalOffering)}</td>
+                        <td className="text-muted-foreground p-4">
                           {filing.industryGroup || "N/A"}
                         </td>
-                        <td className="p-4 text-muted-foreground">
-                          {filing.issuerState || "N/A"}
-                        </td>
-                        <td className="p-4 text-muted-foreground">
+                        <td className="text-muted-foreground p-4">{filing.issuerState || "N/A"}</td>
+                        <td className="text-muted-foreground p-4">
                           {filing.estimatedHeadcount?.toLocaleString() ?? "—"}
                         </td>
                         <td className="p-4">
@@ -1421,7 +1571,7 @@ export default function FilingsPage() {
                           )}
                         </td>
                         <td className="p-4">
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                          <ExternalLink className="text-muted-foreground h-4 w-4" />
                         </td>
                       </tr>
                     ))}
@@ -1435,8 +1585,8 @@ export default function FilingsPage() {
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-sm text-muted-foreground text-center sm:text-left">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-muted-foreground text-center text-sm sm:text-left">
             Page {pagination.page} of {pagination.totalPages}
           </p>
           <div className="flex items-center justify-center gap-2 sm:justify-end">
@@ -1467,14 +1617,17 @@ export default function FilingsPage() {
       )}
 
       {/* Save Filter Dialog */}
-      <Dialog open={saveDialogOpen} onOpenChange={(open) => {
-        setSaveDialogOpen(open);
-        if (!open) {
-          // Clear error and name when dialog closes
-          setFilterNameError(null);
-          setFilterName("");
-        }
-      }}>
+      <Dialog
+        open={saveDialogOpen}
+        onOpenChange={(open) => {
+          setSaveDialogOpen(open);
+          if (!open) {
+            // Clear error and name when dialog closes
+            setFilterNameError(null);
+            setFilterName("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Save Filter</DialogTitle>
@@ -1496,18 +1649,14 @@ export default function FilingsPage() {
                 }}
                 className={filterNameError ? "border-destructive" : ""}
               />
-              {filterNameError && (
-                <p className="text-sm text-destructive">{filterNameError}</p>
-              )}
+              {filterNameError && <p className="text-destructive text-sm">{filterNameError}</p>}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveFilter}>
-              Save
-            </Button>
+            <Button onClick={handleSaveFilter}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

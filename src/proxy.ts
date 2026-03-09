@@ -10,16 +10,20 @@ import { getSessionCookie } from "better-auth/cookies";
  */
 export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
+  const pathname = request.nextUrl.pathname;
 
-  // Optimistic redirect - cookie existence check only
-  // Full validation happens in page components via auth.api.getSession()
-  if (!sessionCookie) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  // Allow guest access to the main dashboard preview page
+  const isGuestAllowed = pathname === "/dashboard";
 
-  return NextResponse.next();
+  const response =
+    sessionCookie || isGuestAllowed
+      ? NextResponse.next()
+      : NextResponse.redirect(new URL("/login", request.url));
+
+  response.headers.set("x-pathname", pathname);
+  return response;
 }
 
 export const config = {
-  matcher: ["/chat", "/chat/:path*", "/profile", "/profile/:path*"], // Protected routes (dashboard is public)
+  matcher: ["/chat", "/chat/:path*", "/profile", "/profile/:path*", "/dashboard", "/dashboard/:path*"],
 };

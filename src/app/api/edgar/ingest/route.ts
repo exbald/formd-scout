@@ -4,7 +4,6 @@ import { and, eq, isNull } from "drizzle-orm";
 // Allow up to 5 minutes for large backfill ingestions (requires Vercel Pro+)
 export const maxDuration = 300;
 import { db } from "@/lib/db";
-import { formDFilings } from "@/lib/schema";
 import {
   fetchRecentFormDFilings,
   fetchFilingIndex,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/edgar/fetcher";
 import { parseFormDXml, validateParsedFiling } from "@/lib/edgar/parser";
 import { extractFilingInfo } from "@/lib/edgar/types";
+import { formDFilings } from "@/lib/schema";
 
 /**
  * POST /api/edgar/ingest

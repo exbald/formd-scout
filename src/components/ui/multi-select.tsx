@@ -3,6 +3,7 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -16,7 +17,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface MultiSelectProps {
@@ -107,13 +107,25 @@ export function MultiSelect({
             )}
           </div>
           {selected.length > 0 && (
-            <button
-              className="ml-2 ring-offset-background rounded-[0.15rem] outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            <span
+              role="button"
+              tabIndex={0}
+              className="ml-2 ring-offset-background rounded-[0.15rem] outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 cursor-pointer"
               aria-label="Clear all selections"
               onClick={handleClear}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleClear(e as unknown as React.MouseEvent);
+                }
+              }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
             >
               <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-            </button>
+            </span>
           )}
         </Button>
       </PopoverTrigger>
@@ -131,10 +143,10 @@ export function MultiSelect({
                 >
                   <div
                     className={cn(
-                      "mr-2 flex h-4 w-4 items-center justify-center rounded-[0.15rem] border border-primary",
+                      "mr-2 flex h-4 w-4 items-center justify-center rounded-[0.15rem] border",
                       selected.includes(option.value)
-                        ? "bg-primary text-primary-foreground"
-                        : "opacity-50"
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/50 bg-transparent"
                     )}
                   >
                     {selected.includes(option.value) && (

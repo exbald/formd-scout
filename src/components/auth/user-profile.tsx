@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, LogOut } from "lucide-react";
@@ -15,12 +16,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useSession, signOut } from "@/lib/auth-client";
 
+function subscribe(_callback: () => void) {
+  return () => {};
+}
+
+function getSnapshot() {
+  return true;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 export function UserProfile() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  if (isPending) {
-    return <div>Loading...</div>;
+  if (!mounted || isPending) {
+    return <div className="h-8 w-20" />;
   }
 
   if (!session) {
@@ -47,30 +61,22 @@ export function UserProfile() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-8 cursor-pointer hover:opacity-80 transition-opacity">
+        <Avatar className="size-8 cursor-pointer transition-opacity hover:opacity-80">
           <AvatarImage
             src={session.user?.image || ""}
             alt={session.user?.name || "User"}
             referrerPolicy="no-referrer"
           />
           <AvatarFallback>
-            {(
-              session.user?.name?.[0] ||
-              session.user?.email?.[0] ||
-              "U"
-            ).toUpperCase()}
+            {(session.user?.name?.[0] || session.user?.email?.[0] || "U").toUpperCase()}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {session.user?.name}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {session.user?.email}
-            </p>
+            <p className="text-sm leading-none font-medium">{session.user?.name}</p>
+            <p className="text-muted-foreground text-xs leading-none">{session.user?.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
