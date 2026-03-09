@@ -10,13 +10,17 @@ import { DashboardNav } from "./nav";
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   const session = await auth.api.getSession({ headers: headersList });
+  const pathname = headersList.get("x-pathname") || "";
+
+  if (pathname === "/dashboard") {
+    return <DashboardNav>{children}</DashboardNav>;
+  }
 
   if (!session) {
     redirect("/login");
   }
 
   const userId = session.user.id;
-  const pathname = headersList.get("x-pathname") || "";
 
   if (!pathname.includes("/onboarding")) {
     try {

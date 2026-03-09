@@ -3,7 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Calendar, TrendingUp, DollarSign, ExternalLink } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,6 +50,14 @@ interface HighRelevanceFiling {
   relevanceScore: number | null;
 }
 
+const PIE_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+];
+
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<StatsData | null>(null);
@@ -53,7 +72,7 @@ export default function DashboardPage() {
         // Fetch stats and high-relevance filings in parallel - only 2 API calls
         const [statsResponse, filingsResponse] = await Promise.all([
           fetch("/api/edgar/stats"),
-          fetch("/api/edgar/filings?minRelevance=20&sortBy=relevanceScore&sortOrder=desc&limit=10"),
+          fetch("/api/edgar/filings?minRelevance=50&sortBy=relevanceScore&sortOrder=desc&limit=10"),
         ]);
 
         if (!statsResponse.ok) {
@@ -140,7 +159,7 @@ export default function DashboardPage() {
             ) : (
               <div className="text-2xl font-bold">{stats?.highRelevanceCount ?? 0}</div>
             )}
-            <p className="text-muted-foreground mt-1 text-xs">Score 30+</p>
+            <p className="text-muted-foreground mt-1 text-xs">Score 60+</p>
           </CardContent>
         </Card>
 
@@ -244,40 +263,40 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="h-[250px] w-full">
+              <div className="flex h-[250px] w-full items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={stats.topIndustries}
-                    layout="vertical"
-                    margin={{ top: 10, right: 30, left: 10, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis
-                      type="number"
-                      allowDecimals={false}
-                      tick={{ fontSize: 12 }}
-                      className="text-muted-foreground"
-                    />
-                    <YAxis
-                      type="category"
-                      dataKey="industry"
-                      tick={{ fontSize: 11 }}
-                      className="text-muted-foreground"
-                      width={120}
-                      tickFormatter={(value) =>
-                        value && value.length > 15 ? `${value.slice(0, 15)}...` : value
-                      }
-                    />
+                  <PieChart>
+                    <Pie
+                      data={stats.topIndustries.map((item) => ({
+                        name: item.industry ?? "Unknown",
+                        value: item.count,
+                      }))}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={45}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ name, percent }) => {
+                        const n = name ?? "Unknown";
+                        const p = percent ?? 0;
+                        return `${n.slice(0, 10)}${n.length > 10 ? "..." : ""} ${(p * 100).toFixed(0)}%`;
+                      }}
+                      labelLine={{ stroke: "var(--muted-foreground)", strokeWidth: 1 }}
+                    >
+                      {stats.topIndustries.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]!} />
+                      ))}
+                    </Pie>
                     <Tooltip
-                      formatter={(value) => [value ?? 0, "Filings"]}
+                      formatter={(value, name) => [value ?? 0, name]}
                       contentStyle={{
                         backgroundColor: "var(--card)",
                         borderColor: "var(--border)",
                         borderRadius: "8px",
                       }}
                     />
-                    <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
-                  </BarChart>
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
             )}
@@ -290,7 +309,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Recent High-Relevance Filings</CardTitle>
-            <CardDescription>Top 10 filings with relevance score of 20 or higher</CardDescription>
+            <CardDescription>Top 10 filings with relevance score of 50 or higher</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
@@ -299,7 +318,7 @@ export default function DashboardPage() {
               </div>
             ) : highRelevanceFilings.length === 0 ? (
               <div className="text-muted-foreground p-6 text-center sm:p-8">
-                No high-relevance filings found. Filings with AI enrichment scores of 20+ will
+                No high-relevance filings found. Filings with AI enrichment scores of 50+ will
                 appear here.
               </div>
             ) : (

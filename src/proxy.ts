@@ -12,21 +12,18 @@ export async function proxy(request: NextRequest) {
   const sessionCookie = getSessionCookie(request);
   const pathname = request.nextUrl.pathname;
 
-  const response = sessionCookie
-    ? NextResponse.next()
-    : NextResponse.redirect(new URL("/login", request.url));
+  // Allow guest access to the main dashboard preview page
+  const isGuestAllowed = pathname === "/dashboard";
+
+  const response =
+    sessionCookie || isGuestAllowed
+      ? NextResponse.next()
+      : NextResponse.redirect(new URL("/login", request.url));
 
   response.headers.set("x-pathname", pathname);
   return response;
 }
 
 export const config = {
-  matcher: [
-    "/chat",
-    "/chat/:path*",
-    "/profile",
-    "/profile/:path*",
-    "/dashboard",
-    "/dashboard/:path*",
-  ],
+  matcher: ["/chat", "/chat/:path*", "/profile", "/profile/:path*", "/dashboard", "/dashboard/:path*"],
 };

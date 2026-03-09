@@ -87,9 +87,7 @@ export async function GET() {
           count: sql<number>`count(*)::int`,
         })
         .from(filingEnrichments)
-        .where(
-          sql`${filingEnrichments.relevanceScore} >= 30`
-        ),
+        .where(sql`${filingEnrichments.relevanceScore} >= 60`),
 
       // Average offering amount (across all filings with non-null totalOffering)
       db
@@ -155,9 +153,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching stats:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch statistics" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch statistics" }, { status: 500 });
   }
 }

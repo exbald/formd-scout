@@ -29,7 +29,8 @@
       "WebSearch",
       "WebFetch(domain:docs.firecrawl.dev)",
       "Bash(grep:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
