@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, gte, sql } from "drizzle-orm";
-import { researchCompany, type ResearchInput } from "@/lib/ai/research";
+import { eq, gte, and, sql } from "drizzle-orm";
+import {
+  submitAgentJob,
+  checkAgentJob,
+  type ResearchInput,
+  type AgentJobStatus,
+} from "@/lib/ai/research";
 import { db } from "@/lib/db";
 import {
   formDFilings,
   filingEnrichments,
   companyResearch,
   appSettings,
+  researchJobs,
 } from "@/lib/schema";
 
 export const maxDuration = 300;
@@ -14,27 +20,63 @@ export const maxDuration = 300;
 const INGEST_API_KEY = process.env.INGEST_API_KEY;
 const BATCH_SIZE = 5;
 
+/** Maximum time (ms) to wait for a single agent job before giving up. */
+const AGENT_TIMEOUT_MS = 120_000;
+/** Interval (ms) between polling attempts for a pending agent job. */
+const POLL_INTERVAL_MS = 5_000;
+
+/**
+ * Sleep helper that returns a promise resolving after the given milliseconds.
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Poll a Firecrawl agent job until it completes, fails, or the timeout is
+ * exceeded. Returns the final job status.
+ */
+async function pollAgentJob(agentId: string): Promise<AgentJobStatus> {
+  const deadline = Date.now() + AGENT_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const status = await checkAgentJob(agentId);
+
+    if (status.status !== "pending") {
+      return status;
+    }
+
+    // Wait before the next poll, but respect the deadline
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await sleep(Math.min(POLL_INTERVAL_MS, remaining));
+  }
+
+  return { status: "failed", error: "Agent job timed out after 120 seconds" };
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey || !INGEST_API_KEY || apiKey !== INGEST_API_KEY) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.FIRECRAWL_API_KEY || !process.env.OPENROUTER_API_KEY) {
+  if (!process.env.FIRECRAWL_API_KEY) {
     return NextResponse.json(
-      { error: "FIRECRAWL_API_KEY and OPENROUTER_API_KEY must be configured" },
+      { error: "FIRECRAWL_API_KEY must be configured" },
       { status: 500 }
     );
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const userId = body.userId as string | undefined;
 
     // Load settings - use provided userId or find first user's settings
     let threshold = 60;
     let maxDaily = 15;
     let enabled = true;
+    let maxCredits = 2000;
 
     if (userId) {
       const [settings] = await db
@@ -46,6 +88,9 @@ export async function POST(req: NextRequest) {
         threshold = settings.autoResearchThreshold ?? 60;
         maxDaily = settings.maxDailyResearch ?? 15;
         enabled = settings.autoResearchEnabled ?? true;
+        if (settings.maxAgentCredits) {
+          maxCredits = settings.maxAgentCredits;
+        }
       }
     } else {
       const [settings] = await db.select().from(appSettings).limit(1);
@@ -53,6 +98,9 @@ export async function POST(req: NextRequest) {
         threshold = settings.autoResearchThreshold ?? 60;
         maxDaily = settings.maxDailyResearch ?? 15;
         enabled = settings.autoResearchEnabled ?? true;
+        if (settings.maxAgentCredits) {
+          maxCredits = settings.maxAgentCredits;
+        }
       }
     }
 
@@ -117,6 +165,23 @@ export async function POST(req: NextRequest) {
 
     for (const { filing } of candidates) {
       try {
+        // Skip if there is already a pending job for this filing
+        const [existingJob] = await db
+          .select()
+          .from(researchJobs)
+          .where(and(eq(researchJobs.filingId, filing.id), eq(researchJobs.status, "pending")))
+          .limit(1);
+
+        if (existingJob) {
+          details.push({
+            filingId: filing.id,
+            companyName: filing.companyName,
+            status: "skipped",
+            error: "Research job already pending",
+          });
+          continue;
+        }
+
         const researchInput: ResearchInput = {
           companyName: filing.companyName,
           industryGroup: filing.industryGroup,
@@ -125,20 +190,47 @@ export async function POST(req: NextRequest) {
           totalOffering: filing.totalOffering,
         };
 
-        const result = await researchCompany(researchInput);
+        // Submit the agent job to Firecrawl
+        const { agentId, prompt } = await submitAgentJob(researchInput, undefined, maxCredits);
 
-        if (!result.success || !result.data) {
+        // Track the job in the database
+        const [job] = await db
+          .insert(researchJobs)
+          .values({
+            filingId: filing.id,
+            agentId,
+            status: "pending",
+            prompt,
+            maxCredits,
+          })
+          .returning();
+
+        // Poll until the agent completes, fails, or times out
+        const jobStatus = await pollAgentJob(agentId);
+
+        if (jobStatus.status === "failed" || !jobStatus.data) {
+          const errorMessage = jobStatus.error ?? "Agent research failed";
+
+          // Mark the job as failed in the database
+          if (job) {
+            await db
+              .update(researchJobs)
+              .set({ status: "failed", error: errorMessage, updatedAt: new Date() })
+              .where(eq(researchJobs.id, job.id));
+          }
+
           errors++;
           details.push({
             filingId: filing.id,
             companyName: filing.companyName,
             status: "error",
-            error: result.error ?? "Research failed",
+            error: errorMessage,
           });
           continue;
         }
 
-        const data = result.data;
+        // Agent completed successfully — save research data
+        const data = jobStatus.data;
         await db.insert(companyResearch).values({
           filingId: filing.id,
           websiteUrl: data.websiteUrl,
@@ -173,11 +265,19 @@ export async function POST(req: NextRequest) {
           fundingHistory: data.fundingHistory,
           growthSignals: data.growthSignals,
           socialProfiles: data.socialProfiles,
-          companySize: data.companySize,
-          researchPrompt: null,
-          creditsUsed: null,
+          companySize: data.companySize ?? null,
+          researchPrompt: prompt,
+          creditsUsed: jobStatus.creditsUsed ?? null,
           source: "firecrawl",
         });
+
+        // Mark the job as completed
+        if (job) {
+          await db
+            .update(researchJobs)
+            .set({ status: "completed", updatedAt: new Date() })
+            .where(eq(researchJobs.id, job.id));
+        }
 
         researched++;
         details.push({
