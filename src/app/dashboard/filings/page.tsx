@@ -312,6 +312,7 @@ export default function FilingsPage() {
       if (minHeadcount) params.set("minHeadcount", minHeadcount);
       if (isAmendment && isAmendment !== "all") params.set("isAmendment", isAmendment);
       if (yetToOccur) params.set("yetToOccur", "true");
+      if (session?.user?.id) params.set("userId", session.user.id);
       params.set("page", page.toString());
       params.set("sortBy", sortBy);
       params.set("sortOrder", sortOrder);
@@ -375,6 +376,7 @@ export default function FilingsPage() {
     sortOrder,
     router,
     validateDateRange,
+    session?.user?.id,
   ]);
 
   useEffect(() => {

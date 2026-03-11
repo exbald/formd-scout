@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import {
   enrichFiling,
   getEnrichmentModelName,
+  buildScoringProfileFromTeamProfile,
   type ScoringProfile,
   DEFAULT_SCORING_PROFILE,
 } from "@/lib/ai/enrichment";
@@ -19,14 +20,8 @@ async function getScoringProfileForUser(userId: string): Promise<ScoringProfile>
       .where(eq(teamProfiles.userId, userId))
       .limit(1);
 
-    if (profile?.scoringCriteria) {
-      return {
-        targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
-        targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
-        idealCompanyProfile:
-          profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
-        scoringCriteria: profile.scoringCriteria,
-      };
+    if (profile) {
+      return buildScoringProfileFromTeamProfile(profile);
     }
   } catch (error) {
     console.error("Error fetching team profile:", error);
@@ -68,7 +63,13 @@ export async function POST(request: NextRequest) {
         enrichmentId: filingEnrichments.id,
       })
       .from(formDFilings)
-      .leftJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId));
+      .leftJoin(
+        filingEnrichments,
+        and(
+          eq(formDFilings.id, filingEnrichments.filingId),
+          eq(filingEnrichments.userId, session.user.id)
+        )
+      );
 
     if (rescoreAll) {
       query = query.limit(20) as typeof query;
@@ -81,9 +82,18 @@ export async function POST(request: NextRequest) {
     let enriched = 0;
     let errors = 0;
 
-    for (const filing of filings) {
+    for (let i = 0; i < filings.length; i++) {
+      const filing = filings[i]!;
+
       if (rescoreAll && filing.enrichmentId) {
-        await db.delete(filingEnrichments).where(eq(filingEnrichments.id, filing.enrichmentId));
+        await db
+          .delete(filingEnrichments)
+          .where(
+            and(
+              eq(filingEnrichments.id, filing.enrichmentId),
+              eq(filingEnrichments.userId, session.user.id)
+            )
+          );
       }
 
       const result = await enrichFiling(
@@ -111,6 +121,7 @@ export async function POST(request: NextRequest) {
         try {
           await db.insert(filingEnrichments).values({
             filingId: filing.id,
+            userId: session.user.id,
             companySummary: result.data.companySummary,
             relevanceScore: result.data.relevanceScore,
             relevanceReasoning: result.data.relevanceReasoning,
@@ -130,7 +141,7 @@ export async function POST(request: NextRequest) {
         errors++;
       }
 
-      if (filings.indexOf(filing) < filings.length - 1) {
+      if (i < filings.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
@@ -138,7 +149,13 @@ export async function POST(request: NextRequest) {
     const remainingResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(formDFilings)
-      .leftJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId))
+      .leftJoin(
+        filingEnrichments,
+        and(
+          eq(formDFilings.id, filingEnrichments.filingId),
+          eq(filingEnrichments.userId, session.user.id)
+        )
+      )
       .where(sql`${filingEnrichments.id} IS NULL`);
     const remaining = remainingResult[0]?.count ?? 0;
 

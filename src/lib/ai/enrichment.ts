@@ -26,6 +26,29 @@ export const DEFAULT_SCORING_PROFILE: ScoringProfile = {
   },
 };
 
+/**
+ * Build a ScoringProfile from a team profile's relevant fields.
+ * Returns DEFAULT_SCORING_PROFILE when the profile lacks custom scoring criteria.
+ */
+export function buildScoringProfileFromTeamProfile(profile: {
+  targetMarkets: string[] | null;
+  targetIndustries: string[] | null;
+  idealCompanyProfile: string | null;
+  scoringCriteria: { high: string; medium: string; low: string } | null;
+}): ScoringProfile {
+  if (!profile.scoringCriteria) {
+    return DEFAULT_SCORING_PROFILE;
+  }
+
+  return {
+    targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
+    targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
+    idealCompanyProfile:
+      profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
+    scoringCriteria: profile.scoringCriteria,
+  };
+}
+
 const enrichmentSchema = z.object({
   companySummary: z.string().describe("2-3 sentence summary of the company and what they do"),
   relevanceScore: z

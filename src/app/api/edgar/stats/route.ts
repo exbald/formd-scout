@@ -1,7 +1,12 @@
-import { NextResponse } from "next/server";
-import { sql, gte, eq } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
+import { sql, gte, eq, and, isNull } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
 import { formDFilings, filingEnrichments } from "@/lib/schema";
+
+/** Alias tables for dual-join per-user enrichment strategy in stats. */
+const userEnrich = alias(filingEnrichments, "user_enrich");
+const sysEnrich = alias(filingEnrichments, "sys_enrich");
 
 /**
  * Helper to format a Date as YYYY-MM-DD string.
@@ -23,7 +28,9 @@ function toDateStr(d: Date): string {
  *
  * Auth: Public — no authentication required.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const userId = req.nextUrl.searchParams.get("userId");
+
   try {
     // Get current date boundaries for PostgreSQL
     const today = new Date();
@@ -81,14 +88,43 @@ export async function GET() {
         .from(formDFilings)
         .where(gte(formDFilings.filingDate, monthStartStr)),
 
-      // High relevance count (score >= 60, last 7 days)
-      db
-        .select({
-          count: sql<number>`count(*)::int`,
-        })
-        .from(filingEnrichments)
-        .innerJoin(formDFilings, sql`${filingEnrichments.filingId} = ${formDFilings.id}`)
-        .where(sql`${filingEnrichments.relevanceScore} >= 60 AND ${formDFilings.filingDate} >= ${weekStartStr}`),
+      // High relevance count (score >= 60, last 7 days).
+      // When userId is provided, prefer user-specific enrichment scores via dual join with COALESCE.
+      userId
+        ? db
+            .select({
+              count: sql<number>`count(*)::int`,
+            })
+            .from(formDFilings)
+            .leftJoin(
+              userEnrich,
+              and(
+                eq(formDFilings.id, userEnrich.filingId),
+                eq(userEnrich.userId, userId)
+              )
+            )
+            .leftJoin(
+              sysEnrich,
+              and(
+                eq(formDFilings.id, sysEnrich.filingId),
+                isNull(sysEnrich.userId)
+              )
+            )
+            .where(
+              sql`COALESCE(${userEnrich.relevanceScore}, ${sysEnrich.relevanceScore}) >= 60
+                AND ${formDFilings.filingDate} >= ${weekStartStr}`
+            )
+        : db
+            .select({
+              count: sql<number>`count(*)::int`,
+            })
+            .from(filingEnrichments)
+            .innerJoin(formDFilings, sql`${filingEnrichments.filingId} = ${formDFilings.id}`)
+            .where(
+              sql`${filingEnrichments.relevanceScore} >= 60
+                AND ${filingEnrichments.userId} IS NULL
+                AND ${formDFilings.filingDate} >= ${weekStartStr}`
+            ),
 
       // Average offering amount (last 7 days)
       db

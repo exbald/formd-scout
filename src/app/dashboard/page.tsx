@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSession } from "@/lib/auth-client";
 import { formatDollarAmount } from "@/lib/format-currency";
 import { formatDate } from "@/lib/format-date";
 import { getRelevanceBadgeVariant, getRelevanceColor } from "@/lib/relevance-styles";
@@ -60,19 +61,25 @@ const PIE_COLORS = [
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [stats, setStats] = useState<StatsData | null>(null);
   const [highRelevanceFilings, setHighRelevanceFilings] = useState<HighRelevanceFiling[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const userId = session?.user?.id;
+
   // Single useEffect fetches all dashboard data in parallel for optimal performance
   useEffect(() => {
     async function fetchDashboardData() {
       try {
+        // Build userId query param for per-user enrichment scores
+        const userParam = userId ? `&userId=${userId}` : "";
+
         // Fetch stats and high-relevance filings in parallel - only 2 API calls
         const [statsResponse, filingsResponse] = await Promise.all([
-          fetch("/api/edgar/stats"),
-          fetch("/api/edgar/filings?minRelevance=50&sortBy=relevanceScore&sortOrder=desc&limit=10"),
+          fetch(`/api/edgar/stats?${userId ? `userId=${userId}` : ""}`),
+          fetch(`/api/edgar/filings?minRelevance=50&sortBy=relevanceScore&sortOrder=desc&limit=10${userParam}`),
         ]);
 
         if (!statsResponse.ok) {
@@ -95,7 +102,7 @@ export default function DashboardPage() {
     }
 
     fetchDashboardData();
-  }, []);
+  }, [userId]);
 
   return (
     <div className="container mx-auto p-4 sm:p-6">

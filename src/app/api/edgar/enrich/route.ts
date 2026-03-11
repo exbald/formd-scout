@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import {
   enrichFiling,
   getEnrichmentModelName,
+  buildScoringProfileFromTeamProfile,
   type EnrichmentInput,
   type ScoringProfile,
   DEFAULT_SCORING_PROFILE,
@@ -22,14 +23,8 @@ async function getScoringProfile(userId?: string): Promise<ScoringProfile> {
       .where(eq(teamProfiles.userId, userId))
       .limit(1);
 
-    if (profile?.scoringCriteria) {
-      return {
-        targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
-        targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
-        idealCompanyProfile:
-          profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
-        scoringCriteria: profile.scoringCriteria,
-      };
+    if (profile) {
+      return buildScoringProfileFromTeamProfile(profile);
     }
   } catch (error) {
     console.error("Error fetching team profile:", error);
@@ -89,7 +84,13 @@ export async function POST(request: NextRequest) {
           firstSaleDate: formDFilings.firstSaleDate,
         })
         .from(formDFilings)
-        .leftJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId))
+        .leftJoin(
+          filingEnrichments,
+          and(
+            eq(formDFilings.id, filingEnrichments.filingId),
+            isNull(filingEnrichments.userId)
+          )
+        )
         .where(isNull(filingEnrichments.id))
         .limit(10);
 
@@ -144,7 +145,12 @@ async function enrichSingleFiling(
     const [existing] = await db
       .select()
       .from(filingEnrichments)
-      .where(eq(filingEnrichments.filingId, filingId))
+      .where(
+        and(
+          eq(filingEnrichments.filingId, filingId),
+          isNull(filingEnrichments.userId)
+        )
+      )
       .limit(1);
 
     if (existing) {
@@ -182,6 +188,7 @@ async function enrichSingleFiling(
 
     await db.insert(filingEnrichments).values({
       filingId: filing.id,
+      userId: null,
       companySummary: enrichment.companySummary,
       relevanceScore: enrichment.relevanceScore,
       relevanceReasoning: enrichment.relevanceReasoning,

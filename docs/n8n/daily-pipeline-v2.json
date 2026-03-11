@@ -18,6 +18,26 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "api-key-assignment",
+              "name": "apiKey",
+              "value": "PASTE_YOUR_INGEST_API_KEY_HERE",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f0e1d2c3-b4a5-4678-9012-3456789abcde",
+      "name": "Set Config",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-1104, 112]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://formd-scout.vercel.app/api/edgar/ingest",
         "sendHeaders": true,
@@ -25,7 +45,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -93,7 +113,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -160,7 +180,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -198,7 +218,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -240,13 +260,52 @@
     {
       "parameters": {
         "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/enrich/per-user",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $('Set Config').item.json.apiKey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{ \"daysBack\": 1 }",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "id": "e1f2a3b4-c5d6-4789-e0f1-a2b3c4d5e6f7",
+      "name": "Enrich Per-User",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [560, 112],
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
         "url": "https://formd-scout.vercel.app/api/edgar/research/batch",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -313,7 +372,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -351,7 +410,7 @@
           "parameters": [
             {
               "name": "x-api-key",
-              "value": "={{ $vars.INGEST_API_KEY }}"
+              "value": "={{ $('Set Config').item.json.apiKey }}"
             },
             {
               "name": "Content-Type",
@@ -392,7 +451,7 @@
     },
     {
       "parameters": {
-        "content": "\nDaily SEC Ingestion, Enrichment, Research & Alerts (v2)\n\nRuns every weekday at 8 AM UTC (3 AM EST)\n1. Ingest — Pulls new Form D filings from the SEC website (yesterday + today).\n2. Check — If new filings found → enrich. If none → stop.\n3. Enrich — AI scores each filing 1–100 for relevance. Runs in batches of 10.\n4. Summary — Logs ingestion + enrichment counts.\n5. Research — Auto-researches high-relevance companies via Firecrawl (batch of 5).\n6. More Research? — If batch was near-full, run another batch.\n7. Alert Digest — Checks alert configs and sends email notifications for matching filings.",
+        "content": "\nDaily SEC Ingestion, Enrichment, Research & Alerts (v2)\n\nRuns every weekday at 8 AM UTC (3 AM EST)\n1. Ingest — Pulls new Form D filings from the SEC website (yesterday + today).\n2. Check — If new filings found → enrich. If none → stop.\n3. Enrich — AI scores each filing 1–100 for relevance. Runs in batches of 10.\n4. Summary — Logs ingestion + enrichment counts.\n5. Per-User Enrich — Re-scores today's filings using each user's custom scoring profile.\n6. Research — Auto-researches high-relevance companies via Firecrawl (batch of 5).\n7. More Research? — If batch was near-full, run another batch.\n8. Alert Digest — Checks alert configs and sends email notifications for matching filings.",
         "height": 280,
         "width": 720
       },
@@ -405,6 +464,17 @@
   ],
   "connections": {
     "Daily 8AM UTC": {
+      "main": [
+        [
+          {
+            "node": "Set Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Config": {
       "main": [
         [
           {
@@ -496,6 +566,17 @@
       ]
     },
     "Build Summary": {
+      "main": [
+        [
+          {
+            "node": "Enrich Per-User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Per-User": {
       "main": [
         [
           {

@@ -1,9 +1,10 @@
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
   enrichFiling,
   getEnrichmentModelName,
+  buildScoringProfileFromTeamProfile,
   type EnrichmentInput,
   type ScoringProfile,
   DEFAULT_SCORING_PROFILE,
@@ -20,14 +21,8 @@ async function getScoringProfileForUser(userId: string): Promise<ScoringProfile>
       .where(eq(teamProfiles.userId, userId))
       .limit(1);
 
-    if (profile?.scoringCriteria) {
-      return {
-        targetMarkets: profile.targetMarkets ?? DEFAULT_SCORING_PROFILE.targetMarkets,
-        targetIndustries: profile.targetIndustries ?? DEFAULT_SCORING_PROFILE.targetIndustries,
-        idealCompanyProfile:
-          profile.idealCompanyProfile ?? DEFAULT_SCORING_PROFILE.idealCompanyProfile,
-        scoringCriteria: profile.scoringCriteria,
-      };
+    if (profile) {
+      return buildScoringProfileFromTeamProfile(profile);
     }
   } catch (error) {
     console.error("Error fetching team profile:", error);
@@ -62,11 +57,23 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     const [existing] = await db
       .select()
       .from(filingEnrichments)
-      .where(eq(filingEnrichments.filingId, id))
+      .where(
+        and(
+          eq(filingEnrichments.filingId, id),
+          eq(filingEnrichments.userId, session.user.id)
+        )
+      )
       .limit(1);
 
     if (existing) {
-      await db.delete(filingEnrichments).where(eq(filingEnrichments.filingId, id));
+      await db
+        .delete(filingEnrichments)
+        .where(
+          and(
+            eq(filingEnrichments.filingId, id),
+            eq(filingEnrichments.userId, session.user.id)
+          )
+        );
     }
 
     const enrichmentInput: EnrichmentInput = {
@@ -102,6 +109,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       .insert(filingEnrichments)
       .values({
         filingId: filing.id,
+        userId: session.user.id,
         companySummary: enrichment.companySummary,
         relevanceScore: enrichment.relevanceScore,
         relevanceReasoning: enrichment.relevanceReasoning,

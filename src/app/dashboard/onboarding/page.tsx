@@ -12,6 +12,7 @@ import {
   ArrowLeft,
   Check,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -188,6 +189,15 @@ export default function OnboardingPage() {
       });
 
       if (!settingsRes.ok) throw new Error("Failed to save settings");
+
+      // Fire-and-forget: score recent filings with the user's new profile
+      fetch("/api/edgar/enrich/per-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ daysBack: 30 }),
+      }).catch(() => {});
+      toast.info("Scoring recent filings with your profile in the background...");
 
       router.push("/dashboard");
     } catch (error) {

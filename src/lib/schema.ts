@@ -146,6 +146,7 @@ export const filingEnrichments = pgTable(
     filingId: uuid("filing_id")
       .notNull()
       .references(() => formDFilings.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
     companySummary: text("company_summary"),
     relevanceScore: integer("relevance_score"),
     relevanceReasoning: text("relevance_reasoning"),
@@ -156,7 +157,10 @@ export const filingEnrichments = pgTable(
     enrichedAt: timestamp("enriched_at").defaultNow().notNull(),
     modelUsed: varchar("model_used", { length: 100 }),
   },
-  (table) => [index("filing_id_idx").on(table.filingId)]
+  (table) => [
+    uniqueIndex("enrichment_filing_user_idx").on(table.filingId, table.userId),
+    index("enrichment_user_id_idx").on(table.userId),
+  ]
 );
 
 export const savedFilters = pgTable(
