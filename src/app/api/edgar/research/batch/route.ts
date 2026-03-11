@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
 
     const limit = Math.min(BATCH_SIZE, remainingBudget);
 
-    // Find filings with relevanceScore >= threshold and no existing research
+    // Find filings with relevanceScore >= threshold, no existing research,
+    // and no pending/completed research job (prevents duplicate submissions)
     const candidates = await db
       .select({
         filing: formDFilings,
@@ -117,8 +118,12 @@ export async function POST(req: NextRequest) {
       .from(formDFilings)
       .innerJoin(filingEnrichments, eq(formDFilings.id, filingEnrichments.filingId))
       .leftJoin(companyResearch, eq(formDFilings.id, companyResearch.filingId))
+      .leftJoin(researchJobs, and(
+        eq(formDFilings.id, researchJobs.filingId),
+        sql`${researchJobs.status} IN ('pending', 'completed')`,
+      ))
       .where(
-        sql`${filingEnrichments.relevanceScore} >= ${threshold} AND ${companyResearch.id} IS NULL`
+        sql`${filingEnrichments.relevanceScore} >= ${threshold} AND ${companyResearch.id} IS NULL AND ${researchJobs.id} IS NULL`
       )
       .orderBy(sql`${filingEnrichments.relevanceScore} DESC`)
       .limit(limit);
