@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import {
   Building2,
   Rocket,
@@ -101,6 +102,56 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+  const [profileExists, setProfileExists] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    async function loadExistingProfile() {
+      try {
+        const [profileRes, settingsRes] = await Promise.all([
+          fetch("/api/edgar/profile", { credentials: "include" }),
+          fetch("/api/edgar/settings", { credentials: "include" }),
+        ]);
+
+        if (profileRes.ok) {
+          const data = await profileRes.json();
+          if (data.profile) {
+            setProfileExists(true);
+            setFormData((prev) => ({
+              ...prev,
+              targetMarkets: data.profile.targetMarkets ?? [],
+              targetIndustries: data.profile.targetIndustries ?? [],
+              idealCompanyProfile: data.profile.idealCompanyProfile ?? "",
+              scoringHigh: data.profile.scoringCriteria?.high ?? "",
+              scoringMedium: data.profile.scoringCriteria?.medium ?? "",
+              scoringLow: data.profile.scoringCriteria?.low ?? "",
+              emailTone: data.profile.emailTone ?? "professional",
+              teamName: data.profile.teamName ?? "",
+              companyName: data.profile.companyName ?? "",
+              keyClients: data.profile.keyClients ?? [],
+              template: "",
+            }));
+          }
+        }
+
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json();
+          if (settingsData.autoResearchThreshold != null) {
+            setFormData((prev) => ({
+              ...prev,
+              autoResearchThreshold: settingsData.autoResearchThreshold,
+            }));
+          }
+        }
+      } catch {
+        // Profile fetch failed - continue as new user
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    }
+
+    loadExistingProfile();
+  }, []);
 
   const applyTemplate = (template: IndustryTemplate) => {
     setFormData((prev) => ({
@@ -156,7 +207,7 @@ export default function OnboardingPage() {
     setLoading(true);
     try {
       const profileRes = await fetch("/api/edgar/profile", {
-        method: "POST",
+        method: profileExists ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
@@ -175,7 +226,7 @@ export default function OnboardingPage() {
         }),
       });
 
-      if (!profileRes.ok) throw new Error("Failed to create profile");
+      if (!profileRes.ok) throw new Error("Failed to save profile");
 
       const settingsRes = await fetch("/api/edgar/settings", {
         method: "PUT",
@@ -197,7 +248,11 @@ export default function OnboardingPage() {
         credentials: "include",
         body: JSON.stringify({ daysBack: 30 }),
       }).catch(() => {});
-      toast.info("Scoring recent filings with your profile in the background...");
+      toast.info(
+        profileExists
+          ? "Profile updated. Re-scoring filings in the background..."
+          : "Scoring recent filings with your profile in the background...",
+      );
 
       router.push("/dashboard");
     } catch (error) {
@@ -209,6 +264,10 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = async () => {
+    if (profileExists) {
+      router.push("/dashboard");
+      return;
+    }
     setLoading(true);
     try {
       const defaultTemplate = INDUSTRY_TEMPLATES[0]!;
@@ -248,7 +307,7 @@ export default function OnboardingPage() {
   const canProceed = () => {
     switch (step) {
       case 1:
-        return formData.template !== "";
+        return profileExists || formData.template !== "";
       case 2:
         return formData.targetMarkets.length > 0;
       case 3:
@@ -262,13 +321,25 @@ export default function OnboardingPage() {
     }
   };
 
+  if (isLoadingProfile) {
+    return (
+      <div className="bg-muted/30 flex min-h-screen items-center justify-center">
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-muted/30 min-h-screen">
       <div className="mx-auto max-w-3xl px-4 py-12">
         <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold">Welcome to FormD Scout</h1>
+          <h1 className="text-2xl font-semibold">
+            {profileExists ? "Update Your Setup" : "Welcome to FormD Scout"}
+          </h1>
           <p className="text-muted-foreground mt-2">
-            Let&apos;s set up your profile in just a few steps
+            {profileExists
+              ? "Review and update your profile settings"
+              : "Let\u0027s set up your profile in just a few steps"}
           </p>
         </div>
 
@@ -575,7 +646,7 @@ export default function OnboardingPage() {
                 </Button>
               ) : (
                 <Button variant="ghost" onClick={handleSkip} disabled={loading}>
-                  Skip for now
+                  {profileExists ? "Cancel" : "Skip for now"}
                 </Button>
               )}
             </div>

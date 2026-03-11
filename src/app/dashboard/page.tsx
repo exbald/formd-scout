@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, Calendar, TrendingUp, DollarSign, ExternalLink } from "lucide-react";
+import { FileText, Calendar, TrendingUp, DollarSign, ExternalLink, Wand2 } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -16,6 +17,7 @@ import {
   Cell,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/lib/auth-client";
@@ -66,6 +68,7 @@ export default function DashboardPage() {
   const [highRelevanceFilings, setHighRelevanceFilings] = useState<HighRelevanceFiling[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [profileIsMinimal, setProfileIsMinimal] = useState(false);
 
   const userId = session?.user?.id;
 
@@ -76,10 +79,11 @@ export default function DashboardPage() {
         // Build userId query param for per-user enrichment scores
         const userParam = userId ? `&userId=${userId}` : "";
 
-        // Fetch stats and high-relevance filings in parallel - only 2 API calls
-        const [statsResponse, filingsResponse] = await Promise.all([
+        // Fetch stats, high-relevance filings, and profile in parallel
+        const [statsResponse, filingsResponse, profileResponse] = await Promise.all([
           fetch(`/api/edgar/stats?${userId ? `userId=${userId}` : ""}`),
           fetch(`/api/edgar/filings?minRelevance=50&sortBy=relevanceScore&sortOrder=desc&limit=10${userParam}`),
+          fetch("/api/edgar/profile", { credentials: "include" }),
         ]);
 
         if (!statsResponse.ok) {
@@ -93,6 +97,14 @@ export default function DashboardPage() {
         if (filingsResponse.ok) {
           const filingsData = await filingsResponse.json();
           setHighRelevanceFilings(filingsData.filings || []);
+        }
+
+        // Check if profile is minimal (missing team/company name)
+        if (profileResponse.ok) {
+          const pd = await profileResponse.json();
+          if (pd.profile && !pd.profile.teamName && !pd.profile.companyName) {
+            setProfileIsMinimal(true);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load dashboard");
@@ -115,6 +127,24 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Incomplete profile banner */}
+      {!loading && profileIsMinimal && (
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-[0.15rem] border border-warning-border bg-warning-muted px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Wand2 className="h-4 w-4 shrink-0 text-warning-foreground" />
+            <div>
+              <p className="text-sm font-medium text-warning-foreground">Profile not fully configured</p>
+              <p className="text-xs text-warning-foreground/70">
+                Add your team name and company to get personalized scoring and outreach.
+              </p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" asChild className="shrink-0">
+            <Link href="/dashboard/onboarding">Complete Setup</Link>
+          </Button>
+        </div>
+      )}
 
       {/* Stats Cards Row - responsive: 1 col mobile, 2 cols tablet, 4 cols desktop */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">

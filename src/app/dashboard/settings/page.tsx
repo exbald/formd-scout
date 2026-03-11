@@ -10,6 +10,7 @@ import {
   RefreshCw,
   Loader2,
   Briefcase,
+  Wand2,
   Target,
   Mail,
   Plus,
@@ -573,6 +574,21 @@ export default function SettingsPage() {
         icon={<Briefcase className="h-5 w-5" />}
       >
         <div className="space-y-4">
+          <div className="mb-4 flex items-center justify-between rounded-[0.15rem] border border-info-border bg-info-muted px-4 py-3">
+            <div>
+              <p className="text-sm font-medium text-info-foreground">Setup Wizard</p>
+              <p className="text-xs text-info-foreground/70">
+                Re-run the guided wizard to update markets, scoring criteria, and more.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard/onboarding">
+                <Wand2 className="mr-2 h-4 w-4" />
+                Re-run Wizard
+              </Link>
+            </Button>
+          </div>
+          <Separator className="mb-4" />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="teamName">Team Name</Label>
