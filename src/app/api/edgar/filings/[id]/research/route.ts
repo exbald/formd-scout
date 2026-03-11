@@ -69,47 +69,48 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     // Job completed — save the research data
     const data = jobStatus.data!;
 
-    const insertValues = {
-      filingId: id,
-      websiteUrl: data.websiteUrl,
-      websiteSummary: data.websiteSummary,
-      jobPostings: data.jobPostings?.map((jp) => ({
-        title: jp.title,
-        location: jp.location,
-        url: jp.url ?? null,
-        datePosted: jp.datePosted ?? null,
-      })),
-      jobPostingsCount: data.jobPostingsCount,
-      leadershipTeam: data.leadershipTeam?.map((lt) => ({
-        name: lt.name,
-        title: lt.title,
-        email: lt.email ?? null,
-        linkedinUrl: lt.linkedinUrl ?? null,
-      })),
-      officeLocations: data.officeLocations?.map((loc) => ({
-        city: loc.city,
-        state: loc.state,
-        country: loc.country,
-        type: loc.type,
-      })),
-      techStack: data.techStack,
-      recentNews: data.recentNews?.map((news) => ({
-        headline: news.headline,
-        date: news.date,
-        url: news.url ?? null,
-        summary: news.summary,
-      })),
-      employeeEstimate: data.employeeEstimate,
-      fundingHistory: data.fundingHistory,
-      growthSignals: data.growthSignals,
-      socialProfiles: data.socialProfiles,
-      companySize: data.companySize ?? null,
-      researchPrompt: pendingJob.prompt,
-      creditsUsed: jobStatus.creditsUsed,
-      source: "firecrawl",
-    };
-
-    const inserted = await db.insert(companyResearch).values(insertValues).returning();
+    const inserted = await db
+      .insert(companyResearch)
+      .values({
+        filingId: id,
+        websiteUrl: data.websiteUrl,
+        websiteSummary: data.websiteSummary,
+        jobPostings: data.jobPostings?.map((jp) => ({
+          title: jp.title,
+          location: jp.location,
+          url: jp.url ?? null,
+          datePosted: jp.datePosted ?? null,
+        })),
+        jobPostingsCount: data.jobPostingsCount,
+        leadershipTeam: data.leadershipTeam?.map((lt) => ({
+          name: lt.name,
+          title: lt.title,
+          email: lt.email ?? null,
+          linkedinUrl: lt.linkedinUrl ?? null,
+        })),
+        officeLocations: data.officeLocations?.map((loc) => ({
+          city: loc.city,
+          state: loc.state,
+          country: loc.country,
+          type: loc.type,
+        })),
+        techStack: data.techStack,
+        recentNews: data.recentNews?.map((news) => ({
+          headline: news.headline,
+          date: news.date,
+          url: news.url ?? null,
+          summary: news.summary,
+        })),
+        employeeEstimate: data.employeeEstimate,
+        fundingHistory: data.fundingHistory,
+        growthSignals: data.growthSignals,
+        socialProfiles: data.socialProfiles,
+        companySize: data.companySize ?? null,
+        researchPrompt: pendingJob.prompt,
+        creditsUsed: jobStatus.creditsUsed ?? null,
+        source: "firecrawl",
+      })
+      .returning();
 
     // Mark job as completed
     await db

@@ -1,0 +1,638 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"startDate\": \"{{ $now.minus(1, 'day').toFormat('yyyy-MM-dd') }}\",\n  \"endDate\": \"{{ $now.toFormat('yyyy-MM-dd') }}\"\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "id": "687f64bc-b7f3-45c5-a980-e7e3df01dd9f",
+      "name": "Ingest Form D Filings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -224,
+        848
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "check-ingested",
+              "leftValue": "={{ $json.ingested }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "fab21221-12fc-4320-84b3-4e72be3bddeb",
+      "name": "New Filings?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/enrich",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "id": "ca17fa76-d9b3-4580-8c70-c055fcf3ebb8",
+      "name": "AI Enrich Filings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        752
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "more-to-enrich",
+              "leftValue": "={{ $json.enriched }}",
+              "rightValue": 9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ba0144f3-3f96-4b1b-878a-8ce7f67d6899",
+      "name": "More to Enrich?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        432,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/enrich",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "id": "2eeb0fdf-1049-401c-95e5-64bcd9d91a6b",
+      "name": "Enrich Batch 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        656,
+        640
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/enrich",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "id": "234d4184-a9bc-4623-b60d-292449f4859c",
+      "name": "Enrich Batch 3",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        640
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c2817842-2be2-4ccd-bef3-9bb20309fe3c",
+      "name": "Build Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1104,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/research/batch",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "a7c2b8af-93cb-4efb-87b1-ee894b9c2f7f",
+      "name": "Research High-Relevance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        752
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "more-to-research",
+              "leftValue": "={{ $json.submitted }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3a8cdfbf-a554-4706-adda-3a15af0c3dc8",
+      "name": "More to Research?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1552,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/research/batch",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "5a682430-14c3-43a3-9792-08056ce9db33",
+      "name": "Research Batch 2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1776,
+        640
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      },
+      "id": "b1e3a9f2-7c45-4d8e-a6b0-2f9c8d4e5a1b",
+      "name": "Wait for Callbacks",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        752
+      ],
+      "webhookId": "wait-for-firecrawl-callbacks"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://formd-scout.vercel.app/api/edgar/alerts/digest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "a3f8b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "id": "d8c4f227-d3c4-4076-a8cc-e24ebef73b14",
+      "name": "Send Alert Digest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2224,
+        752
+      ],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6ca89b0c-6d01-4ebf-9788-0c55c6a82bee",
+      "name": "Log: No New Filings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "content": "\nDaily SEC Ingestion, Enrichment, Research & Alerts (v3 — webhook callbacks)\n\nRuns every weekday at 3 PM UTC\n1. Ingest — Pulls new Form D filings from the SEC website (yesterday + today).\n2. Check — If new filings found → enrich. If none → stop.\n3. Enrich — AI scores each filing 1–100 for relevance. Runs in batches of 10.\n4. Summary — Logs ingestion + enrichment counts.\n5. Research — Submits high-relevance companies to Firecrawl (fire-and-forget, returns in seconds).\n6. More Research? — If batch was near-full (submitted >= 4), submit another batch.\n7. Wait — 5 min for Firecrawl webhook callbacks to deliver research data.\n8. Alert Digest — Checks alert configs and sends email notifications for matching filings.",
+        "height": 300,
+        "width": 720
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        416,
+        912
+      ],
+      "typeVersion": 1,
+      "id": "6b3ae540-af8d-4f34-a443-22330a130b45",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 15
+            }
+          ]
+        }
+      },
+      "id": "fe8b8417-7956-464e-b618-ee2850931b52",
+      "name": "Daily 3PM UTC",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -448,
+        848
+      ]
+    }
+  ],
+  "connections": {
+    "Ingest Form D Filings": {
+      "main": [
+        [
+          {
+            "node": "New Filings?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Filings?": {
+      "main": [
+        [
+          {
+            "node": "AI Enrich Filings",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log: No New Filings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Enrich Filings": {
+      "main": [
+        [
+          {
+            "node": "More to Enrich?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More to Enrich?": {
+      "main": [
+        [
+          {
+            "node": "Enrich Batch 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Batch 2": {
+      "main": [
+        [
+          {
+            "node": "Enrich Batch 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Batch 3": {
+      "main": [
+        [
+          {
+            "node": "Build Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Summary": {
+      "main": [
+        [
+          {
+            "node": "Research High-Relevance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research High-Relevance": {
+      "main": [
+        [
+          {
+            "node": "More to Research?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More to Research?": {
+      "main": [
+        [
+          {
+            "node": "Research Batch 2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait for Callbacks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Research Batch 2": {
+      "main": [
+        [
+          {
+            "node": "Wait for Callbacks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait for Callbacks": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Digest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily 3PM UTC": {
+      "main": [
+        [
+          {
+            "node": "Ingest Form D Filings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "Daily 3PM UTC": [
+      {
+        "timestamp": "2026-03-09T15:00:14.008+01:00",
+        "Readable date": "March 9th 2026, 3:00:14 pm",
+        "Readable time": "3:00:14 pm",
+        "Day of week": "Monday",
+        "Year": "2026",
+        "Month": "March",
+        "Day of month": "09",
+        "Hour": "15",
+        "Minute": "00",
+        "Second": "14",
+        "Timezone": "Europe/Berlin (UTC+01:00)"
+      }
+    ]
+  },
+  "meta": {
+    "instanceId": "2221f298da57396f5606c32519dd53744c4c25aad4e048716f8a0d85e0ee9820"
+  }
+}

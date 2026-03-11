@@ -1,6 +1,8 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { db } from "@/lib/db";
+import { companyResearch } from "@/lib/schema";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -106,7 +108,7 @@ export interface TeamProfileContext {
 // Firecrawl /v2/agent response
 // ---------------------------------------------------------------------------
 
-const agentResearchSchema = z.object({
+export const agentResearchSchema = z.object({
   websiteUrl: z.string().nullable(),
   websiteSummary: z.string(),
   leadershipTeam: z.array(
@@ -540,6 +542,13 @@ const agentJsonSchema = {
 // Public API — async agent job submission + polling
 // ---------------------------------------------------------------------------
 
+export interface WebhookConfig {
+  url: string;
+  headers?: Record<string, string>;
+  metadata?: Record<string, string>;
+  events?: string[];
+}
+
 /**
  * Submit a Firecrawl agent job. Returns the agent ID immediately without
  * waiting for the result. The caller is responsible for storing the agent ID
@@ -548,7 +557,8 @@ const agentJsonSchema = {
 export async function submitAgentJob(
   filingData: ResearchInput,
   teamProfile?: TeamProfileContext,
-  maxCredits: number = 2000
+  maxCredits: number = 2000,
+  webhook?: WebhookConfig,
 ): Promise<{ agentId: string; prompt: string }> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) {
@@ -568,6 +578,7 @@ export async function submitAgentJob(
       schema: agentJsonSchema,
       maxCredits,
       model: "spark-1-mini",
+      ...(webhook && { webhook }),
     }),
   });
 
@@ -583,6 +594,52 @@ export async function submitAgentJob(
   }
 
   return { agentId: submitResult.id, prompt };
+}
+
+/**
+ * Save parsed research data to the `companyResearch` table. Shared by the
+ * webhook callback, batch route, and individual filing research route.
+ */
+export async function saveResearchData(
+  filingId: string,
+  data: z.infer<typeof agentResearchSchema>,
+  prompt: string | null,
+  creditsUsed: number | null,
+): Promise<void> {
+  await db.insert(companyResearch).values({
+    filingId,
+    websiteUrl: data.websiteUrl,
+    websiteSummary: data.websiteSummary,
+    jobPostings: [],
+    jobPostingsCount: data.jobPostingsCount ?? 0,
+    leadershipTeam: data.leadershipTeam?.map((lt) => ({
+      name: lt.name,
+      title: lt.title,
+      email: lt.email ?? null,
+      linkedinUrl: lt.linkedinUrl ?? null,
+    })),
+    officeLocations: data.officeLocations?.map((loc) => ({
+      city: loc.city,
+      state: loc.state,
+      country: loc.country,
+      type: loc.type,
+    })),
+    techStack: data.techStack,
+    recentNews: data.recentNews?.map((news) => ({
+      headline: news.headline,
+      date: news.date,
+      url: news.url ?? null,
+      summary: news.summary,
+    })),
+    employeeEstimate: data.employeeEstimate,
+    fundingHistory: data.fundingHistory,
+    growthSignals: data.growthSignals,
+    socialProfiles: data.socialProfiles,
+    companySize: data.companySize ?? null,
+    researchPrompt: prompt,
+    creditsUsed,
+    source: "firecrawl",
+  });
 }
 
 export interface AgentJobStatus {

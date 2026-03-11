@@ -299,7 +299,10 @@ export const researchJobs = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("research_jobs_filing_id_idx").on(table.filingId)]
+  (table) => [
+    index("research_jobs_filing_id_idx").on(table.filingId),
+    index("research_jobs_agent_id_idx").on(table.agentId),
+  ]
 );
 
 export const alertConfigs = pgTable(
