@@ -17,6 +17,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +35,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format-date";
 import { getStatusBadgeClass } from "@/lib/relevance-styles";
+import { cn } from "@/lib/utils";
 
 interface EmailDraft {
   id: string;
@@ -202,11 +204,11 @@ export default function OutreachPage() {
   if (!sessionPending && !session) {
     return (
       <div className="mx-auto mt-16 max-w-lg space-y-6 px-4 text-center">
-        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-[0.15rem]">
+        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-md">
           <Mail className="text-primary h-8 w-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Sign in to access Outreach</h2>
+          <h2 className="font-display text-3xl italic">Sign in to access Outreach</h2>
           <p className="text-muted-foreground">
             Email drafts and outreach tools are only available to signed-in users.
           </p>
@@ -228,29 +230,30 @@ export default function OutreachPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 md:space-y-6">
-      <div className="border-border mb-2 flex items-center justify-between border-b pb-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <Mail className="text-primary h-5 w-5" />
-            Outreach
-          </h1>
-          <p className="text-muted-foreground mt-1 text-xs font-semibold tracking-widest uppercase">
-            AI-generated email drafts for your leads
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={() => fetchDrafts()} disabled={isLoading}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        kicker="Correspondence"
+        title="Outreach"
+        description="AI-generated email drafts for your leads."
+        actions={
+          <Button variant="outline" size="sm" onClick={() => fetchDrafts()} disabled={isLoading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        }
+      />
 
-      <div className="border-border flex items-center gap-2 border-b pb-3">
+      <div className="flex items-center gap-1 border-b border-border">
         {statusTabs.map((tab) => (
-          <Button
+          <button
             key={tab.value}
-            variant={activeTab === tab.value ? "default" : "ghost"}
-            size="sm"
+            type="button"
+            className={cn(
+              "px-3 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px",
+              activeTab === tab.value
+                ? "border-highlight text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
             onClick={() => {
               setActiveTab(tab.value);
               setPage(0);
@@ -258,7 +261,7 @@ export default function OutreachPage() {
             }}
           >
             {tab.label}
-          </Button>
+          </button>
         ))}
       </div>
 
@@ -293,7 +296,7 @@ export default function OutreachPage() {
           {drafts.map((draft) => (
             <Card key={draft.id} className="overflow-hidden">
               <button
-                className="hover:bg-muted/50 focus-visible:ring-ring w-full p-4 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset"
+                className="hover:bg-muted/50 focus-visible:ring-ring w-full p-5 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset"
                 onClick={() => setExpandedDraft(expandedDraft === draft.id ? null : draft.id)}
                 aria-expanded={expandedDraft === draft.id}
               >
@@ -353,7 +356,7 @@ export default function OutreachPage() {
 
                   <div>
                     <Label className="text-muted-foreground text-xs">Body</Label>
-                    <div className="bg-background mt-1 rounded-[0.15rem] border p-3 text-sm whitespace-pre-wrap">
+                    <div className="bg-background mt-1 rounded-md border p-3 text-sm whitespace-pre-wrap">
                       {draft.body}
                     </div>
                   </div>
@@ -367,7 +370,7 @@ export default function OutreachPage() {
                         {draft.followUpSequence.map((followUp, idx) => (
                           <div
                             key={idx}
-                            className="bg-background rounded-[0.15rem] border p-2 text-sm"
+                            className="bg-background rounded-md border p-2 text-sm"
                           >
                             <div className="text-muted-foreground mb-1 flex items-center gap-2 text-xs">
                               <span className="font-medium">Day {followUp.delayDays}</span>

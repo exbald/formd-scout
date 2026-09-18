@@ -62,10 +62,12 @@ docker compose up -d     # Start local PostgreSQL (pgvector:pg18)
 
 - **Tokens:** All colors defined as `hsl()` CSS custom properties in `src/app/globals.css` (values MUST include `hsl()` wrapper for Tailwind v4)
 - **Status tokens:** `--success`, `--warning`, `--info`, `--neutral` (with `-foreground`, `-muted`, `-border` variants)
-- **Primary:** `hsl(220 80% 25%)` (Deep Corporate Blue light) / `hsl(210 60% 60%)` (dark)
-- **Accent:** `hsl(214 70% 95%)` (Subtle blue tint for hover states) / `hsl(215 40% 16%)` (dark)
-- **Border radius:** `0.15rem` -- sharp enterprise corners throughout
-- **Card signature:** 3px primary-colored top border (`border-t-[3px] border-t-primary`)
+- **Highlight:** `--highlight` / `--highlight-foreground` — bronze accent for active nav, high-signal scores, marketing kickers
+- **Primary:** Ink (`hsl(25 20% 14%)` light) / ivory (`hsl(40 22% 88%)` dark)
+- **Surfaces:** Warm limestone (`hsl(40 18% 97%)`) / warm charcoal (`hsl(25 10% 7%)`)
+- **Typography:** Newsreader (display) + Source Sans 3 (UI) + IBM Plex Mono (data)
+- **Border radius:** `0.5rem` — use token radii (`rounded-md`, `rounded-lg`), never hardcoded values
+- **Card signature:** Hairline `border-border` + soft shadow. 2px left bronze bar (`.signal-card`) only on high-signal stat cards
 - **Full reference:** `docs/design-system.md`
 
 ## Rules

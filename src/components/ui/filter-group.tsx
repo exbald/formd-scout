@@ -24,7 +24,7 @@ export function FilterGroup({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className={className}>
-      <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between rounded-[0.15rem] p-2 text-left transition-colors">
+      <CollapsibleTrigger className="hover:bg-muted/50 flex w-full items-center justify-between rounded-md p-2 text-left transition-colors">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{title}</span>
           {badge}

@@ -19,6 +19,7 @@ import {
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/page-header";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -481,7 +482,7 @@ export default function SettingsPage() {
     return (
       <div className="mx-auto mt-16 max-w-lg space-y-6 px-4 text-center">
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Sign in to access Settings</h2>
+          <h2 className="font-display text-3xl italic">Sign in to access Settings</h2>
           <p className="text-muted-foreground">
             Account settings are only available to signed-in users.
           </p>
@@ -516,23 +517,23 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account settings and preferences</p>
-      </div>
+      <PageHeader
+        kicker="Account"
+        title="Settings"
+        description="Manage your profile, markets, scoring, and alerts."
+        actions={
+          <Button onClick={handleSaveProfile} disabled={isSaving}>
+            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+            Save Changes
+          </Button>
+        }
+      />
 
       {error && (
         <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
           {error}
         </div>
       )}
-
-      <div className="flex justify-end">
-        <Button onClick={handleSaveProfile} disabled={isSaving}>
-          {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Save Changes
-        </Button>
-      </div>
 
       <CollapsibleCard
         title="Profile"
@@ -574,7 +575,7 @@ export default function SettingsPage() {
         icon={<Briefcase className="h-5 w-5" />}
       >
         <div className="space-y-4">
-          <div className="mb-4 flex items-center justify-between rounded-[0.15rem] border border-info-border bg-info-muted px-4 py-3">
+          <div className="mb-4 flex items-center justify-between rounded-md border border-info-border bg-info-muted px-4 py-3">
             <div>
               <p className="text-sm font-medium text-info-foreground">Setup Wizard</p>
               <p className="text-xs text-info-foreground/70">

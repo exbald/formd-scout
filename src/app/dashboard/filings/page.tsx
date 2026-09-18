@@ -28,6 +28,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -781,11 +782,11 @@ export default function FilingsPage() {
   if (!sessionPending && !session) {
     return (
       <div className="mx-auto mt-16 max-w-lg space-y-6 px-4 text-center">
-        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-[0.15rem]">
+        <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-md">
           <FileText className="text-primary h-8 w-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-bold">Sign in to access Filings</h2>
+          <h2 className="font-display text-3xl italic">Sign in to access Filings</h2>
           <p className="text-muted-foreground">
             The full filings list with advanced filters, CSV export, and AI enrichment is available
             to registered users. Create a free account to get started.
@@ -815,26 +816,19 @@ export default function FilingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="border-border mb-2 flex items-center justify-between border-b pb-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-            <FileText className="text-primary h-5 w-5" />
-            SEC Form D Filings
-          </h1>
-          <p className="text-muted-foreground mt-1 text-xs font-semibold tracking-widest uppercase">
-            Browse and filter Form D filings from the SEC EDGAR database
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        kicker="EDGAR"
+        title="Filings"
+        description="Browse and filter Form D filings from the SEC EDGAR database."
+      />
 
       {/* Filter Bar */}
       <Card>
         <CardContent className="p-3 md:p-4">
           {/* Filter Header - always visible, clickable on mobile to expand */}
           <button
-            className="focus-visible:ring-ring flex w-full items-center justify-between rounded-[0.15rem] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:pointer-events-none md:w-auto"
+            className="focus-visible:ring-ring flex w-full items-center justify-between rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 md:pointer-events-none md:w-auto"
             onClick={() => setFiltersExpanded(!filtersExpanded)}
             aria-expanded={filtersExpanded}
             aria-controls="filter-controls"
@@ -1124,7 +1118,7 @@ export default function FilingsPage() {
                 </Button>
                 {savedFiltersOpen && (
                   <div
-                    className="bg-popover absolute top-full left-0 z-50 mt-1 w-64 rounded-[0.15rem] border shadow-lg"
+                    className="bg-popover absolute top-full left-0 z-50 mt-1 w-64 rounded-md border shadow-lg"
                     role="menu"
                   >
                     {savedFilters.map((filter) => (
@@ -1542,10 +1536,10 @@ export default function FilingsPage() {
                         <td className="p-4">
                           <span className="font-medium">{filing.companyName}</span>
                         </td>
-                        <td className="text-muted-foreground p-4">
+                        <td className="text-muted-foreground p-4 font-mono text-sm">
                           {formatDate(filing.filingDate)}
                         </td>
-                        <td className="p-4">{formatCurrency(filing.totalOffering)}</td>
+                        <td className="p-4 font-mono text-sm">{formatCurrency(filing.totalOffering)}</td>
                         <td className="text-muted-foreground p-4">
                           {filing.industryGroup || "N/A"}
                         </td>

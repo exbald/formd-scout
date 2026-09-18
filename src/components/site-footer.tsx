@@ -1,16 +1,18 @@
+import Link from "next/link";
+
 export function SiteFooter() {
   return (
-    <footer className="border-t py-6 text-center text-sm text-muted-foreground">
-      <div className="container mx-auto px-4 flex flex-col items-center gap-2">
-        <p>FormD Scout &mdash; SEC EDGAR Form D Filing Monitor</p>
-        <a 
-          href="https://zerodraft.studio" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-[10px] opacity-20 hover:opacity-100 transition-opacity"
-        >
-          zerodraft.studio
-        </a>
+    <footer className="text-muted-foreground border-t py-10 text-sm">
+      <div className="container mx-auto flex flex-col items-center gap-4 px-6 sm:flex-row sm:justify-between">
+        <p>FormD Scout — funding intelligence before the press release.</p>
+        <nav className="flex items-center gap-6" aria-label="Footer">
+          <Link href="/dashboard" className="hover:text-foreground transition-colors">
+            Filings preview
+          </Link>
+          <Link href="/login" className="hover:text-foreground transition-colors">
+            Sign in
+          </Link>
+        </nav>
       </div>
     </footer>
   );
