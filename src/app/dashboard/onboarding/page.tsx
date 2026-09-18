@@ -323,23 +323,26 @@ export default function OnboardingPage() {
 
   if (isLoadingProfile) {
     return (
-      <div className="bg-muted/30 flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="bg-muted/30 min-h-screen">
-      <div className="mx-auto max-w-3xl px-4 py-12">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-semibold">
-            {profileExists ? "Update Your Setup" : "Welcome to FormD Scout"}
+    <div>
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-10 text-center">
+          <p className="text-highlight mb-3 font-mono text-[11px] font-medium tracking-[0.22em] uppercase">
+            Setup
+          </p>
+          <h1 className="font-display text-4xl tracking-tight italic">
+            {profileExists ? "Update your setup" : "Welcome to FormD Scout"}
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-3">
             {profileExists
               ? "Review and update your profile settings"
-              : "Let\u0027s set up your profile in just a few steps"}
+              : "Let’s set up your desk in a few quiet steps"}
           </p>
         </div>
 

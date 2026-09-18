@@ -19,10 +19,9 @@ export default async function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Reset password</CardTitle>
+          <CardTitle className="font-display text-2xl italic">Reset password</CardTitle>
           <CardDescription>Enter your new password below</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
@@ -30,7 +29,6 @@ export default async function ResetPasswordPage() {
             <ResetPasswordForm />
           </Suspense>
         </CardContent>
-      </Card>
-    </div>
+    </Card>
   )
 }

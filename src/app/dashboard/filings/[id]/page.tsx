@@ -31,6 +31,7 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -402,46 +403,46 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
         </Button>
       </div>
 
-      <div className="border-border mb-6 flex flex-col items-start justify-between gap-4 border-b pb-4 sm:mb-8 sm:flex-row">
-        <div className="min-w-0 flex-1">
-          <h1 className="flex items-start gap-2 text-2xl font-semibold tracking-tight sm:items-center">
-            <Building2 className="text-primary mt-0.5 h-5 w-5 shrink-0 sm:mt-0" />
-            <span className="break-words">{filing.companyName}</span>
-          </h1>
-          <div className="text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold tracking-widest uppercase">
-            <Calendar className="h-4 w-4" />
-            Filed: {formatDate(filing.filingDate)}
+      <PageHeader
+        kicker="Issuer"
+        title={filing.companyName}
+        description={
+          <div className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase">
+            <Calendar className="h-3.5 w-3.5" />
+            Filed {formatDate(filing.filingDate)}
             {filing.isAmendment && (
-              <Badge variant="secondary" className="ml-1">
+              <Badge variant="secondary" className="ml-1 tracking-normal">
                 Amendment
               </Badge>
             )}
             {filing.yetToOccur && (
-              <Badge variant="outline" className="ml-1">
+              <Badge variant="outline" className="ml-1 tracking-normal">
                 First Sale Pending
               </Badge>
             )}
           </div>
-        </div>
-        <Button variant="outline" asChild className="shrink-0">
-          <a
-            href={
-              filing.filingUrl ||
-              `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=D&CIK=${filing.cik}`
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink className="mr-2 h-4 w-4" />
-            View on SEC EDGAR
-          </a>
-        </Button>
-      </div>
+        }
+        actions={
+          <Button variant="outline" asChild className="shrink-0">
+            <a
+              href={
+                filing.filingUrl ||
+                `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&type=D&CIK=${filing.cik}`
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              View on SEC EDGAR
+            </a>
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="font-display flex items-center gap-2 text-xl italic">
               <FileText className="h-5 w-5" />
               Filing Details
             </CardTitle>
@@ -454,21 +455,21 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
                   <DollarSign className="h-3 w-3" />
                   Total Offering
                 </p>
-                <p className="text-lg font-semibold">{formatCurrency(filing.totalOffering)}</p>
+                <p className="font-mono text-lg tracking-tight">{formatCurrency(filing.totalOffering)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground flex items-center gap-1 text-sm">
                   <DollarSign className="h-3 w-3" />
                   Amount Sold
                 </p>
-                <p className="text-lg font-semibold">{formatCurrency(filing.amountSold)}</p>
+                <p className="font-mono text-lg tracking-tight">{formatCurrency(filing.amountSold)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground flex items-center gap-1 text-sm">
                   <DollarSign className="h-3 w-3" />
                   Min Investment
                 </p>
-                <p className="text-lg font-semibold">{formatCurrency(filing.minInvestment)}</p>
+                <p className="font-mono text-lg tracking-tight">{formatCurrency(filing.minInvestment)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground flex items-center gap-1 text-sm">
@@ -555,7 +556,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="font-display flex items-center gap-2 text-xl italic">
               <Sparkles className="h-5 w-5" />
               AI Analysis
             </CardTitle>
@@ -668,7 +669,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
                 <Sparkles className="mx-auto mb-4 h-12 w-12 opacity-50" />
                 <p className="text-muted-foreground mb-4">AI enrichment not yet available.</p>
                 {enrichError && (
-                  <div className="bg-destructive/10 text-destructive mb-4 rounded-[0.15rem] p-3 text-sm">
+                  <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
                     {enrichError}
                   </div>
                 )}
@@ -685,7 +686,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
       {/* Company Intel Section */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="font-display flex items-center gap-2 text-xl italic">
             <Search className="h-5 w-5" />
             Company Intel
           </CardTitle>
@@ -969,7 +970,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
               <Search className="mx-auto mb-4 h-12 w-12 opacity-50" />
               <p className="text-muted-foreground mb-4">Company research not yet available.</p>
               {researchError && (
-                <div className="bg-destructive/10 text-destructive mb-4 rounded-[0.15rem] p-3 text-sm">
+                <div className="bg-destructive/10 text-destructive mb-4 rounded-md p-3 text-sm">
                   {researchError}
                 </div>
               )}
@@ -984,7 +985,7 @@ export default function FilingDetailPage({ params }: FilingDetailPageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="font-display flex items-center gap-2 text-xl italic">
             <Mail className="h-5 w-5" />
             Draft Outreach Email
           </CardTitle>

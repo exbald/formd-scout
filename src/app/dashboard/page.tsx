@@ -16,6 +16,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -117,20 +118,16 @@ export default function DashboardPage() {
   }, [userId]);
 
   return (
-    <div className="container mx-auto p-4 sm:p-6">
-      {/* Header */}
-      <div className="border-border mb-6 flex flex-col items-start justify-between gap-4 border-b pb-4 sm:mb-8 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">SEC Form D Monitor</h1>
-          <p className="text-muted-foreground mt-1 text-xs font-semibold tracking-widest uppercase">
-            Monitor private funding filings from SEC EDGAR
-          </p>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        kicker="Monitor"
+        title="The desk"
+        description="Private funding filings from SEC EDGAR, scored for commercial real estate."
+      />
 
       {/* Incomplete profile banner */}
       {!loading && profileIsMinimal && (
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-[0.15rem] border border-warning-border bg-warning-muted px-4 py-3">
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-warning-border bg-warning-muted px-4 py-3">
           <div className="flex items-center gap-3">
             <Wand2 className="h-4 w-4 shrink-0 text-warning-foreground" />
             <div>
@@ -149,9 +146,9 @@ export default function DashboardPage() {
       {/* Stats Cards Row - responsive: 1 col mobile, 2 cols tablet, 4 cols desktop */}
       <div className="mb-6 grid grid-cols-1 gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {/* Today's Filings Card */}
-        <Card>
+        <Card className="card-lift signal-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Today&apos;s Filings</CardTitle>
+            <CardTitle className="text-muted-foreground text-sm font-medium">Today&apos;s Filings</CardTitle>
             <FileText className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -160,15 +157,15 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">{stats?.today.count ?? 0}</div>
+              <div className="font-mono text-3xl tracking-tight">{stats?.today.count ?? 0}</div>
             )}
           </CardContent>
         </Card>
 
         {/* This Week Card */}
-        <Card>
+        <Card className="card-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Last 7 Days</CardTitle>
+            <CardTitle className="text-muted-foreground text-sm font-medium">Last 7 Days</CardTitle>
             <Calendar className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -177,15 +174,15 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">{stats?.thisWeek.count ?? 0}</div>
+              <div className="font-mono text-3xl tracking-tight">{stats?.thisWeek.count ?? 0}</div>
             )}
           </CardContent>
         </Card>
 
         {/* High Relevance Card */}
-        <Card>
+        <Card className="card-lift signal-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High Relevance</CardTitle>
+            <CardTitle className="text-muted-foreground text-sm font-medium">High Relevance</CardTitle>
             <TrendingUp className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -194,16 +191,16 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">{stats?.highRelevanceCount ?? 0}</div>
+              <div className="font-mono text-3xl tracking-tight">{stats?.highRelevanceCount ?? 0}</div>
             )}
-            <p className="text-muted-foreground mt-1 text-xs">Score 60+ (7 days)</p>
+            <p className="text-muted-foreground mt-1 font-mono text-[11px]">Score 60+ · 7 days</p>
           </CardContent>
         </Card>
 
         {/* Average Round Size Card */}
-        <Card>
+        <Card className="card-lift">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average Round Size</CardTitle>
+            <CardTitle className="text-muted-foreground text-sm font-medium">Average Round Size</CardTitle>
             <DollarSign className="text-muted-foreground h-4 w-4" />
           </CardHeader>
           <CardContent>
@@ -212,7 +209,7 @@ export default function DashboardPage() {
             ) : error ? (
               <span className="text-destructive text-sm">Error</span>
             ) : (
-              <div className="text-2xl font-bold">
+              <div className="font-mono text-3xl tracking-tight">
                 {formatDollarAmount(stats?.averageOffering ?? "0")}
               </div>
             )}
@@ -224,7 +221,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Filings Over Time</CardTitle>
+            <CardTitle className="font-display text-2xl italic">Filings Over Time</CardTitle>
             <CardDescription>Daily filing counts for the last 14 days</CardDescription>
           </CardHeader>
           <CardContent>
@@ -276,7 +273,7 @@ export default function DashboardPage() {
                         borderRadius: "8px",
                       }}
                     />
-                    <Bar dataKey="count" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" fill="var(--highlight)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -286,7 +283,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top Industries</CardTitle>
+            <CardTitle className="font-display text-2xl italic">Top Industries</CardTitle>
             <CardDescription>Most active industry groups</CardDescription>
           </CardHeader>
           <CardContent>
@@ -345,7 +342,7 @@ export default function DashboardPage() {
       <div className="mt-6 sm:mt-8">
         <Card>
           <CardHeader>
-            <CardTitle>Recent High-Relevance Filings</CardTitle>
+            <CardTitle className="font-display text-2xl italic">Recent High-Relevance Filings</CardTitle>
             <CardDescription>Top 10 filings with relevance score of 50 or higher</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
@@ -365,10 +362,10 @@ export default function DashboardPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
-                        <th className="p-4 text-left font-medium">Company Name</th>
-                        <th className="p-4 text-left font-medium">Filing Date</th>
-                        <th className="p-4 text-left font-medium">Offering Amount</th>
-                        <th className="p-4 text-left font-medium">Relevance</th>
+                        <th className="text-muted-foreground p-4 text-left text-xs font-medium tracking-wide">Company</th>
+                        <th className="text-muted-foreground p-4 text-left text-xs font-medium tracking-wide">Filed</th>
+                        <th className="text-muted-foreground p-4 text-left text-xs font-medium tracking-wide">Offering</th>
+                        <th className="text-muted-foreground p-4 text-left text-xs font-medium tracking-wide">Relevance</th>
                         <th className="w-10"></th>
                       </tr>
                     </thead>
@@ -382,10 +379,10 @@ export default function DashboardPage() {
                           <td className="p-4">
                             <span className="font-medium">{filing.companyName}</span>
                           </td>
-                          <td className="text-muted-foreground p-4">
+                          <td className="text-muted-foreground p-4 font-mono text-sm">
                             {formatDate(filing.filingDate)}
                           </td>
-                          <td className="p-4">
+                          <td className="p-4 font-mono text-sm">
                             {filing.totalOffering !== null
                               ? formatDollarAmount(filing.totalOffering)
                               : "N/A"}

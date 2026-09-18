@@ -120,13 +120,13 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-muted-foreground text-sm font-medium">Full Name</label>
-                <div className="bg-muted/10 rounded-[0.15rem] border p-3">
+                <div className="bg-muted/10 rounded-md border p-3">
                   {user.name || "Not provided"}
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-muted-foreground text-sm font-medium">Email Address</label>
-                <div className="bg-muted/10 flex items-center justify-between rounded-[0.15rem] border p-3">
+                <div className="bg-muted/10 flex items-center justify-between rounded-md border p-3">
                   <span>{user.email}</span>
                   {user.emailVerified && (
                     <Badge variant="outline" className="text-success border-success">
@@ -142,7 +142,7 @@ export default function ProfilePage() {
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Account Status</h3>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+                <div className="flex items-center justify-between rounded-md border p-4">
                   <div className="space-y-1">
                     <p className="font-medium">Email Verification</p>
                     <p className="text-muted-foreground text-sm">
@@ -153,7 +153,7 @@ export default function ProfilePage() {
                     {user.emailVerified ? "Verified" : "Unverified"}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+                <div className="flex items-center justify-between rounded-md border p-4">
                   <div className="space-y-1">
                     <p className="font-medium">Account Type</p>
                     <p className="text-muted-foreground text-sm">Your account access level</p>
@@ -173,7 +173,7 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+              <div className="flex items-center justify-between rounded-md border p-4">
                 <div className="flex items-center space-x-3">
                   <div className="bg-success h-2 w-2 rounded-full"></div>
                   <div>
@@ -282,7 +282,7 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+            <div className="flex items-center justify-between rounded-md border p-4">
               <div className="flex items-center gap-3">
                 <Lock className="text-muted-foreground h-5 w-5" />
                 <div>
@@ -299,7 +299,7 @@ export default function ProfilePage() {
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+            <div className="flex items-center justify-between rounded-md border p-4">
               <div className="flex items-center gap-3">
                 <Smartphone className="text-muted-foreground h-5 w-5" />
                 <div>
@@ -312,7 +312,7 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+            <div className="flex items-center justify-between rounded-md border p-4">
               <div className="flex items-center gap-3">
                 <Shield className="text-muted-foreground h-5 w-5" />
                 <div>
@@ -341,14 +341,14 @@ export default function ProfilePage() {
             <DialogDescription>Configure your email notification settings.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+            <div className="flex items-center justify-between rounded-md border p-4">
               <div>
                 <p className="font-medium">Marketing Emails</p>
                 <p className="text-muted-foreground text-sm">Product updates and announcements</p>
               </div>
               <Badge variant="secondary">Coming Soon</Badge>
             </div>
-            <div className="flex items-center justify-between rounded-[0.15rem] border p-4">
+            <div className="flex items-center justify-between rounded-md border p-4">
               <div>
                 <p className="font-medium">Security Alerts</p>
                 <p className="text-muted-foreground text-sm">Important security notifications</p>

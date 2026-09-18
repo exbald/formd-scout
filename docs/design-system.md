@@ -1,151 +1,134 @@
 # FormD Scout Design System
 
-A sharp, enterprise-grade design system built on CSS custom properties, Tailwind CSS v4, and shadcn/ui. Designed for professional financial data interfaces.
+Quiet-luxury “private desk” system for CRE intelligence. Built on CSS custom properties, Tailwind CSS v4, and shadcn/ui.
 
 ## Design Principles
 
-- **Enterprise minimalism** -- Clean, formal, data-dense layouts
-- **Sharp corners** -- `0.15rem` border radius throughout (no soft rounded UI)
-- **Token-driven** -- Every color flows from CSS custom properties in `globals.css`
-- **Dark mode native** -- All tokens have light/dark variants; no manual `dark:` prefixes needed for token-based classes
-- **Top-border accent** -- Cards use a 3px primary-colored top border as the signature visual element
+- **Private desk** — Warm stone, espresso ink, a single bronze accent
+- **Type leads** — Newsreader headlines, Source Sans 3 UI, IBM Plex Mono for data
+- **Chrome recedes** — Hairline borders, soft shadows, no competing card bars
+- **Token-driven** — Every color flows from CSS custom properties in `globals.css`
+- **Dark mode native** — Dual palettes on `:root` / `.dark`; prefer token classes over `dark:` prefixes
 
 ---
 
 ## Color Tokens
 
-All colors are defined as `hsl()` values in `src/app/globals.css` using CSS custom properties. Tailwind v4 auto-generates utility classes from the `@theme inline` block. Values **must** be wrapped in `hsl()` (e.g. `hsl(220 80% 25%)`) -- bare HSL triplets like `220 80% 25%` are not valid CSS colors and will be silently ignored by browsers.
+All colors are defined as `hsl()` values in `src/app/globals.css`. Tailwind v4 auto-generates utility classes from the `@theme inline` block. Values **must** be wrapped in `hsl()`.
 
 ### Core Palette
 
 | Token | Light Mode | Dark Mode | Usage |
 |-------|-----------|-----------|-------|
-| `--primary` | `hsl(220 80% 25%)` (Deep Corporate Blue) | `hsl(210 60% 60%)` | Buttons, links, active states, card top borders |
-| `--primary-foreground` | `hsl(0 0% 98%)` | `hsl(0 0% 100%)` | Text on primary backgrounds |
-| `--secondary` | `hsl(240 4.8% 95.9%)` | `hsl(240 3.7% 15.9%)` | Secondary buttons, subtle backgrounds |
-| `--secondary-foreground` | `hsl(240 5.9% 10%)` | `hsl(0 0% 98%)` | Text on secondary backgrounds |
-| `--muted` | `hsl(240 4.8% 95.9%)` | `hsl(240 3.7% 15.9%)` | Disabled states, subtle section backgrounds |
-| `--muted-foreground` | `hsl(240 3.8% 46.1%)` | `hsl(240 5% 64.9%)` | Secondary text, labels, descriptions |
-| `--accent` | `hsl(214 70% 95%)` (Subtle blue tint) | `hsl(215 40% 16%)` | Hover backgrounds |
-| `--accent-foreground` | `hsl(220 80% 20%)` | `hsl(210 60% 90%)` | Text on accent backgrounds |
-| `--destructive` | `hsl(0 84.2% 60.2%)` | `hsl(0 62.8% 30.6%)` | Error states, delete buttons, danger actions |
-| `--destructive-foreground` | `hsl(0 0% 98%)` | `hsl(0 0% 98%)` | Text on destructive backgrounds |
+| `--primary` | `hsl(25 20% 14%)` (Ink) | `hsl(40 22% 88%)` (Ivory) | Buttons, wordmark, primary actions |
+| `--primary-foreground` | `hsl(40 20% 97%)` | `hsl(25 15% 10%)` | Text on primary |
+| `--highlight` | `hsl(28 55% 42%)` (Bronze) | `hsl(32 48% 58%)` | Active nav, high-signal scores, kickers |
+| `--highlight-foreground` | `hsl(40 30% 97%)` | `hsl(25 15% 10%)` | Text on highlight |
+| `--secondary` | `hsl(36 16% 93%)` | `hsl(25 8% 14%)` | Secondary buttons |
+| `--muted` | `hsl(36 14% 93%)` | `hsl(25 8% 14%)` | Subtle fills |
+| `--muted-foreground` | `hsl(28 10% 42%)` | `hsl(30 8% 62%)` | Labels, descriptions |
+| `--accent` | `hsl(36 20% 92%)` | `hsl(25 10% 14%)` | Hover wash (not a brand color) |
+| `--destructive` | `hsl(8 55% 42%)` | `hsl(8 45% 48%)` | Errors, deletes |
 
 ### Surface & Border
 
 | Token | Light Mode | Dark Mode | Usage |
 |-------|-----------|-----------|-------|
-| `--background` | `hsl(0 0% 100%)` (White) | `hsl(240 10% 3.9%)` (Near-black) | Page background |
-| `--foreground` | `hsl(240 10% 3.9%)` | `hsl(0 0% 98%)` | Default text color |
-| `--card` | `hsl(0 0% 100%)` | `hsl(240 10% 5.5%)` | Card backgrounds |
-| `--card-foreground` | `hsl(240 10% 3.9%)` | `hsl(0 0% 98%)` | Card text |
-| `--popover` | `hsl(0 0% 100%)` | `hsl(240 10% 5.5%)` | Dropdown/popover backgrounds |
-| `--border` | `hsl(240 5.9% 90%)` | `hsl(240 4% 22%)` | Borders, dividers |
-| `--input` | `hsl(240 5.9% 90%)` | `hsl(240 4% 22%)` | Form input borders |
-| `--ring` | `hsl(220 80% 25%)` | `hsl(210 60% 60%)` | Focus ring color |
+| `--background` | `hsl(40 18% 97%)` (Limestone) | `hsl(25 10% 7%)` (Warm charcoal) | Page background |
+| `--foreground` | `hsl(25 18% 12%)` (Espresso) | `hsl(40 18% 94%)` | Default text |
+| `--card` | `hsl(40 25% 99%)` | `hsl(25 10% 10%)` | Cards (slightly lifted from page) |
+| `--border` | `hsl(36 12% 86%)` | `hsl(25 8% 18%)` | Hairline borders |
+| `--ring` | `hsl(28 45% 38%)` | `hsl(32 40% 55%)` | Focus ring (bronze) |
 
-### Status Colors (Planned -- see `specs/centralize-design-tokens/`)
+### Status Colors
 
-These tokens will be added to replace hardcoded Tailwind color classes:
+Desaturated sage / amber / slate so they sit on stone.
 
-| Token | Semantic Meaning | Tailwind Classes Generated |
-|-------|-----------------|---------------------------|
-| `--success` / `-foreground` / `-muted` / `-border` | High relevance, sent, verified, complete | `text-success`, `bg-success-muted`, `border-success-border` |
-| `--warning` / `-foreground` / `-muted` / `-border` | Medium relevance, caution | `text-warning`, `bg-warning-muted`, `border-warning-border` |
-| `--info` / `-foreground` / `-muted` / `-border` | Draft, informational | `text-info`, `bg-info-muted`, `border-info-border` |
-| `--neutral` / `-foreground` / `-muted` / `-border` | Low relevance, archived, inactive | `text-neutral`, `bg-neutral-muted`, `border-neutral-border` |
+| Token | Meaning | Classes |
+|-------|---------|---------|
+| `--success` | Complete, sent, verified | `text-success`, `bg-success-muted`, `border-success-border` |
+| `--warning` | Caution, incomplete profile | `text-warning`, `bg-warning-muted` |
+| `--info` | Draft, informational | `text-info`, `bg-info-muted` |
+| `--neutral` | Low / archived | `text-neutral`, `bg-neutral-muted` |
+
+High-relevance scores use **highlight (bronze)**, not success. See `src/lib/relevance-styles.ts`.
 
 ### Chart Colors
 
-Used by recharts for data visualizations. Reference with `var(--chart-N)` (values already include `hsl()`).
-
-| Token | Light Mode | Dark Mode | Intended Use |
-|-------|-----------|-----------|-------------|
-| `--chart-1` | `hsl(220 80% 30%)` (Navy blue) | `hsl(220 70% 60%)` | Primary data series |
-| `--chart-2` | `hsl(180 60% 35%)` (Cyan/teal) | `hsl(180 50% 60%)` | Secondary data series |
-| `--chart-3` | `hsl(140 50% 40%)` (Green) | `hsl(140 40% 60%)` | Tertiary data series |
-| `--chart-4` | `hsl(40 70% 50%)` (Gold) | `hsl(40 60% 60%)` | Fourth data series |
-| `--chart-5` | `hsl(0 60% 50%)` (Red) | `hsl(0 50% 60%)` | Fifth data series |
-
-### Sidebar Colors
-
-| Token | Light Mode | Dark Mode |
-|-------|-----------|-----------|
-| `--sidebar` | `hsl(0 0% 98%)` | `hsl(240 10% 3.9%)` |
-| `--sidebar-foreground` | `hsl(240 5.3% 26.1%)` | `hsl(240 4.8% 95.9%)` |
-| `--sidebar-primary` | `hsl(240 5.9% 10%)` | `hsl(224.3 76.3% 48%)` |
-| `--sidebar-border` | `hsl(220 13% 91%)` | `hsl(240 3.7% 15.9%)` |
+| Token | Intended use |
+|-------|----------------|
+| `--chart-1` | Ink |
+| `--chart-2` | Bronze |
+| `--chart-3` | Sage |
+| `--chart-4` | Stone |
+| `--chart-5` | Muted red |
 
 ---
 
 ## Typography
 
-| Property | Value |
-|----------|-------|
-| Font family (sans) | Inter |
-| Font family (mono) | Roboto Mono |
-| Font features | `cv02`, `cv03`, `cv04`, `cv11` (alternate glyphs for professional data display) |
+| Role | Face | Utility |
+|------|------|---------|
+| Display | Newsreader | `font-display` — `h1`, landing hero, brand “FormD”, empty-state titles |
+| UI | Source Sans 3 | `font-sans` — body, nav, forms, tables |
+| Data | IBM Plex Mono | `font-mono` — amounts, scores, accession numbers, kickers |
 
-Use Tailwind's default type scale. No custom font sizes are defined.
+Kickers: `font-mono text-[11px] font-medium tracking-[0.22em] uppercase text-highlight`
+
+Page titles: `PageHeader` in `src/components/page-header.tsx` (mono kicker + Newsreader `h1` + muted description).
 
 ---
 
 ## Border Radius
 
-The system uses a sharp, minimal radius for an enterprise aesthetic.
+`--radius: 0.5rem` (8px).
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--radius` | `0.15rem` (2.4px) | Base radius |
-| `--radius-sm` | `calc(var(--radius) - 2px)` | Small elements |
-| `--radius-md` | `calc(var(--radius) - 1px)` | Medium elements |
-| `--radius-lg` | `var(--radius)` | Large elements |
-| `--radius-xl` | `calc(var(--radius) + 2px)` | Extra large elements |
+| Token | Usage |
+|-------|-------|
+| `--radius-sm` / `rounded-sm` | Tight chips |
+| `--radius-md` / `rounded-md` | Buttons, inputs, badges |
+| `--radius-lg` / `rounded-lg` | Cards |
+| `--radius-xl` / `rounded-xl` | Marketing frames |
 
-Components use `rounded-[0.15rem]` directly in their class definitions to maintain the sharp look.
+Never hardcode `rounded-[…]` for the system radius.
 
 ---
 
 ## Component Patterns
 
-All components are shadcn/ui-based, stored in `src/components/ui/`. They consume design tokens exclusively.
+### Brand mark
+
+`src/components/brand-mark.tsx` — bronze “D”, italic Newsreader “FormD”, tracked sans “Scout”. Use `inverted` on the dark auth panel.
 
 ### Card
 
-Signature element of the design system. Features a **3px primary-colored top border**.
+Hairline border, soft shadow, no top accent bar.
 
 ```
-rounded-[0.15rem] border border-border border-t-[3px] border-t-primary bg-card text-card-foreground shadow-sm
+rounded-lg border border-border bg-card text-card-foreground shadow-[0_1px_2px_hsl(25_18%_12%/0.06)]
 ```
 
-- Padding: `p-5` for header, content, and footer
-- Description text: `text-sm text-muted-foreground`
+- Padding: `p-6` on header / content / footer
+- Lift on hover: add `card-lift` (dashboard/marketing only)
+- High-signal stats: add `signal-card` (2px left bronze bar)
 
 ### Button
 
-| Variant | Classes |
-|---------|---------|
-| `default` | `bg-primary text-primary-foreground shadow hover:bg-primary/90` |
-| `destructive` | `bg-destructive text-white shadow-xs hover:bg-destructive/90` |
-| `outline` | `border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground` |
-| `secondary` | `bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80` |
-| `ghost` | `hover:bg-accent hover:text-accent-foreground` |
-| `link` | `text-primary underline-offset-4 hover:underline` |
-
-Sizes: `default` (h-9), `sm` (h-8), `lg` (h-10), `icon` (size-9)
+Ink fill (`bg-primary`) in light mode; ivory fill in dark. Sizes: default `h-9`, sm `h-8`, lg `h-10`.
 
 ### Badge
 
-| Variant | Classes |
-|---------|---------|
-| `default` | `bg-primary text-primary-foreground` |
-| `secondary` | `bg-secondary text-secondary-foreground` |
-| `destructive` | `bg-destructive text-destructive-foreground` |
-| `outline` | `text-foreground` (border only) |
+`rounded-md`. Relevance high = bronze (`getRelevanceBadgeClass`).
 
-### Collapsible Card
+---
 
-Enterprise-style card with expand/collapse. Uses `collapsible-card.tsx`.
+## Motion
+
+CSS only. No animation library.
+
+- `page-enter` on `main` — short fade + 6px rise
+- `card-lift` — 1px translate + shadow on hover
+- Header: `bg-background/80` + `backdrop-blur-md`
 
 ---
 
@@ -154,59 +137,33 @@ Enterprise-style card with expand/collapse. Uses `collapsible-card.tsx`.
 ### Always Use Tokens
 
 ```tsx
-// CORRECT - uses design tokens
+// CORRECT
 <div className="bg-background text-foreground border-border" />
-<span className="text-muted-foreground" />
-<Button variant="default" />
+<span className="text-highlight" />
 
-// INCORRECT - hardcoded Tailwind colors
-<div className="bg-white text-gray-900 border-gray-200" />
-<span className="text-gray-500" />
+// INCORRECT
+<div className="bg-white text-gray-900" />
 ```
 
-### Charts (recharts)
-
-Always reference CSS variables for chart colors:
+### Charts
 
 ```tsx
-// CORRECT -- variables already contain hsl(), use var() directly
-<Bar fill="var(--primary)" />
+<Bar fill="var(--highlight)" />
 <CartesianGrid className="stroke-muted" />
-<XAxis className="text-muted-foreground" />
-
-// For tooltips (inline styles)
-contentStyle={{
-  backgroundColor: "var(--card)",
-  borderColor: "var(--border)",
-}}
 ```
 
-### Status/State Colors (after token implementation)
-
-Use the centralized utility from `src/lib/relevance-styles.ts`:
+### Status / relevance
 
 ```tsx
 import { getRelevanceColor, getRelevanceBadgeClass } from "@/lib/relevance-styles";
 
-// Text color for scores
 <span className={getRelevanceColor(score)}>{score}</span>
-
-// Badge styling
 <span className={`border ${getRelevanceBadgeClass(score)}`}>High</span>
-```
-
-### Interactive States
-
-```
-hover:bg-muted/50     -- subtle hover for nav items, list rows
-hover:bg-accent       -- stronger hover for buttons
-hover:text-foreground  -- text hover from muted state
-bg-primary/10         -- light accent background for selected states
 ```
 
 ### Dark Mode
 
-Dark mode is handled at the CSS variable level. When using token classes (`text-primary`, `bg-muted`, etc.), dark mode works automatically. Only use `dark:` prefix when you have a genuine reason for a different class in dark mode (rare).
+Prefer token classes. Dark identity is warm charcoal, ivory primary, brighter bronze highlight.
 
 ---
 
@@ -214,7 +171,9 @@ Dark mode is handled at the CSS variable level. When using token classes (`text-
 
 | File | Purpose |
 |------|---------|
-| `src/app/globals.css` | All CSS custom properties (single source of truth for colors) |
-| `src/components/ui/` | shadcn/ui component library (24 components) |
-| `src/lib/relevance-styles.ts` | Centralized relevance/status styling utilities (planned) |
-| `src/lib/utils.ts` | `cn()` helper for merging Tailwind classes |
+| `src/app/globals.css` | Color, radius, font, motion tokens |
+| `src/app/layout.tsx` | Newsreader, Source Sans 3, IBM Plex Mono |
+| `src/components/brand-mark.tsx` | Wordmark |
+| `src/components/page-header.tsx` | Dashboard page titles |
+| `src/components/ui/` | shadcn primitives |
+| `src/lib/relevance-styles.ts` | Relevance / outreach status classes |

@@ -11,7 +11,7 @@ export function getRelevanceColor(score: number | null): string {
   const level = getRelevanceLevel(score);
   switch (level) {
     case "high":
-      return "text-success";
+      return "text-highlight";
     case "medium":
       return "text-warning";
     case "low":
@@ -25,7 +25,7 @@ export function getRelevanceBadgeClass(score: number | null): string {
   const level = getRelevanceLevel(score);
   switch (level) {
     case "high":
-      return "bg-success-muted text-success-foreground border-success-border";
+      return "bg-highlight/10 text-highlight border-highlight/30";
     case "medium":
       return "bg-warning-muted text-warning-foreground border-warning-border";
     case "low":

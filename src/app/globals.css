@@ -15,6 +15,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -50,147 +52,148 @@
   --color-neutral-muted: var(--neutral-muted);
   --color-neutral-border: var(--neutral-border);
   --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: calc(var(--radius) - 1px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 2px);
-  --font-sans: var(--font-inter, "Inter", sans-serif);
-  --font-mono: var(--font-roboto-mono, "Roboto Mono", monospace);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-source-sans), "Source Sans 3", ui-sans-serif, sans-serif;
+  --font-display: var(--font-newsreader), "Newsreader", Georgia, serif;
+  --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
 }
 
 @layer base {
   :root {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(240 10% 3.9%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(240 10% 3.9%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(240 10% 3.9%);
+    /* Limestone, espresso, bronze */
+    --background: hsl(40 18% 97%);
+    --foreground: hsl(25 18% 12%);
+    --card: hsl(40 25% 99%);
+    --card-foreground: hsl(25 18% 12%);
+    --popover: hsl(40 25% 99%);
+    --popover-foreground: hsl(25 18% 12%);
 
-    /* Deep Corporate Blue for Primary */
-    --primary: hsl(220 80% 25%);
-    --primary-foreground: hsl(0 0% 98%);
+    --primary: hsl(25 20% 14%);
+    --primary-foreground: hsl(40 20% 97%);
 
-    --secondary: hsl(240 4.8% 95.9%);
-    --secondary-foreground: hsl(240 5.9% 10%);
+    --secondary: hsl(36 16% 93%);
+    --secondary-foreground: hsl(25 18% 14%);
 
-    --muted: hsl(240 4.8% 95.9%);
-    --muted-foreground: hsl(240 3.8% 46.1%);
+    --muted: hsl(36 14% 93%);
+    --muted-foreground: hsl(28 10% 42%);
 
-    --accent: hsl(214 70% 95%);
-    --accent-foreground: hsl(220 80% 20%);
+    --accent: hsl(36 20% 92%);
+    --accent-foreground: hsl(25 20% 14%);
 
-    --destructive: hsl(0 84.2% 60.2%);
-    --destructive-foreground: hsl(0 0% 98%);
+    --highlight: hsl(28 55% 42%);
+    --highlight-foreground: hsl(40 30% 97%);
 
-    --border: hsl(240 5.9% 90%);
-    --input: hsl(240 5.9% 90%);
-    --ring: hsl(220 80% 25%);
+    --destructive: hsl(8 55% 42%);
+    --destructive-foreground: hsl(40 30% 98%);
 
-    /* NY Financial Charts Colors */
-    --chart-1: hsl(220 80% 30%);
-    --chart-2: hsl(180 60% 35%);
-    --chart-3: hsl(140 50% 40%);
-    --chart-4: hsl(40 70% 50%);
-    --chart-5: hsl(0 60% 50%);
+    --border: hsl(36 12% 86%);
+    --input: hsl(36 12% 82%);
+    --ring: hsl(28 45% 38%);
 
-    /* Sharp, formal corners */
-    --radius: 0.15rem;
+    --chart-1: hsl(25 18% 22%);
+    --chart-2: hsl(28 50% 42%);
+    --chart-3: hsl(150 18% 38%);
+    --chart-4: hsl(36 12% 55%);
+    --chart-5: hsl(8 40% 45%);
 
-    --sidebar: hsl(0 0% 98%);
-    --sidebar-foreground: hsl(240 5.3% 26.1%);
-    --sidebar-primary: hsl(240 5.9% 10%);
-    --sidebar-primary-foreground: hsl(0 0% 98%);
-    --sidebar-accent: hsl(240 4.8% 95.9%);
-    --sidebar-accent-foreground: hsl(240 5.9% 10%);
-    --sidebar-border: hsl(220 13% 91%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
+    --radius: 0.5rem;
 
-    /* Status Colors */
-    --success: hsl(142 71% 45%);
-    --success-foreground: hsl(142 76% 22%);
-    --success-muted: hsl(142 76% 95%);
-    --success-border: hsl(142 50% 82%);
+    --sidebar: hsl(40 16% 95%);
+    --sidebar-foreground: hsl(25 14% 22%);
+    --sidebar-primary: hsl(25 20% 14%);
+    --sidebar-primary-foreground: hsl(40 20% 97%);
+    --sidebar-accent: hsl(36 16% 92%);
+    --sidebar-accent-foreground: hsl(25 18% 14%);
+    --sidebar-border: hsl(36 12% 86%);
+    --sidebar-ring: hsl(28 45% 38%);
 
-    --warning: hsl(38 92% 50%);
-    --warning-foreground: hsl(32 95% 30%);
-    --warning-muted: hsl(48 96% 94%);
-    --warning-border: hsl(48 70% 80%);
+    --success: hsl(150 22% 36%);
+    --success-foreground: hsl(150 30% 22%);
+    --success-muted: hsl(150 20% 94%);
+    --success-border: hsl(150 16% 80%);
 
-    --info: hsl(217 91% 60%);
-    --info-foreground: hsl(221 83% 30%);
-    --info-muted: hsl(214 95% 94%);
-    --info-border: hsl(214 70% 82%);
+    --warning: hsl(32 50% 42%);
+    --warning-foreground: hsl(28 55% 28%);
+    --warning-muted: hsl(38 40% 94%);
+    --warning-border: hsl(36 30% 80%);
 
-    --neutral: hsl(220 9% 46%);
-    --neutral-foreground: hsl(220 9% 36%);
-    --neutral-muted: hsl(220 14% 96%);
-    --neutral-border: hsl(220 13% 85%);
+    --info: hsl(210 18% 42%);
+    --info-foreground: hsl(210 25% 28%);
+    --info-muted: hsl(210 16% 94%);
+    --info-border: hsl(210 12% 82%);
+
+    --neutral: hsl(30 8% 46%);
+    --neutral-foreground: hsl(30 10% 32%);
+    --neutral-muted: hsl(36 12% 94%);
+    --neutral-border: hsl(32 10% 84%);
   }
 
   .dark {
-    /* Pure Black / Very Dark Slate - Terminal Vibe */
-    --background: hsl(240 10% 3.9%);
-    --foreground: hsl(0 0% 98%);
-    --card: hsl(240 10% 5.5%);
-    --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(240 10% 5.5%);
-    --popover-foreground: hsl(0 0% 98%);
+    --background: hsl(25 10% 7%);
+    --foreground: hsl(40 18% 94%);
+    --card: hsl(25 10% 10%);
+    --card-foreground: hsl(40 18% 94%);
+    --popover: hsl(25 10% 10%);
+    --popover-foreground: hsl(40 18% 94%);
 
-    /* Medium-bright blue that reads as "active" on dark bg */
-    --primary: hsl(210 60% 60%);
-    --primary-foreground: hsl(0 0% 100%);
+    --primary: hsl(40 22% 88%);
+    --primary-foreground: hsl(25 15% 10%);
 
-    --secondary: hsl(240 3.7% 15.9%);
-    --secondary-foreground: hsl(0 0% 98%);
+    --secondary: hsl(25 8% 14%);
+    --secondary-foreground: hsl(40 16% 92%);
 
-    --muted: hsl(240 3.7% 15.9%);
-    --muted-foreground: hsl(240 5% 64.9%);
+    --muted: hsl(25 8% 14%);
+    --muted-foreground: hsl(30 8% 62%);
 
-    --accent: hsl(215 40% 16%);
-    --accent-foreground: hsl(210 60% 90%);
+    --accent: hsl(25 10% 14%);
+    --accent-foreground: hsl(40 18% 92%);
 
-    --destructive: hsl(0 62.8% 30.6%);
-    --destructive-foreground: hsl(0 0% 98%);
+    --highlight: hsl(32 48% 58%);
+    --highlight-foreground: hsl(25 15% 10%);
 
-    --border: hsl(240 4% 22%);
-    --input: hsl(240 4% 22%);
-    --ring: hsl(210 60% 60%);
+    --destructive: hsl(8 45% 48%);
+    --destructive-foreground: hsl(40 20% 96%);
 
-    --chart-1: hsl(220 70% 60%);
-    --chart-2: hsl(180 50% 60%);
-    --chart-3: hsl(140 40% 60%);
-    --chart-4: hsl(40 60% 60%);
-    --chart-5: hsl(0 50% 60%);
+    --border: hsl(25 8% 18%);
+    --input: hsl(25 8% 20%);
+    --ring: hsl(32 40% 55%);
 
-    --sidebar: hsl(240 10% 3.9%);
-    --sidebar-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-primary: hsl(224.3 76.3% 48%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(240 3.7% 15.9%);
-    --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-    --sidebar-border: hsl(240 3.7% 15.9%);
-    --sidebar-ring: hsl(217.2 91.2% 59.8%);
+    --chart-1: hsl(40 18% 82%);
+    --chart-2: hsl(32 48% 58%);
+    --chart-3: hsl(150 22% 52%);
+    --chart-4: hsl(36 10% 48%);
+    --chart-5: hsl(8 38% 58%);
 
-    /* Status Colors */
-    --success: hsl(142 60% 55%);
-    --success-foreground: hsl(142 60% 55%);
-    --success-muted: hsl(142 30% 12%);
-    --success-border: hsl(142 30% 25%);
+    --sidebar: hsl(25 10% 7%);
+    --sidebar-foreground: hsl(40 14% 90%);
+    --sidebar-primary: hsl(40 22% 88%);
+    --sidebar-primary-foreground: hsl(25 15% 10%);
+    --sidebar-accent: hsl(25 8% 14%);
+    --sidebar-accent-foreground: hsl(40 16% 92%);
+    --sidebar-border: hsl(25 8% 18%);
+    --sidebar-ring: hsl(32 40% 55%);
 
-    --warning: hsl(38 70% 55%);
-    --warning-foreground: hsl(38 70% 55%);
-    --warning-muted: hsl(38 30% 12%);
-    --warning-border: hsl(38 30% 25%);
+    --success: hsl(150 22% 55%);
+    --success-foreground: hsl(150 30% 78%);
+    --success-muted: hsl(150 16% 12%);
+    --success-border: hsl(150 14% 22%);
 
-    --info: hsl(217 70% 60%);
-    --info-foreground: hsl(217 70% 60%);
-    --info-muted: hsl(217 30% 12%);
-    --info-border: hsl(217 30% 25%);
+    --warning: hsl(32 48% 55%);
+    --warning-foreground: hsl(38 50% 78%);
+    --warning-muted: hsl(32 20% 12%);
+    --warning-border: hsl(32 22% 24%);
 
-    --neutral: hsl(220 10% 55%);
-    --neutral-foreground: hsl(220 10% 55%);
-    --neutral-muted: hsl(220 5% 15%);
-    --neutral-border: hsl(220 5% 25%);
+    --info: hsl(210 18% 58%);
+    --info-foreground: hsl(210 20% 80%);
+    --info-muted: hsl(210 12% 12%);
+    --info-border: hsl(210 12% 24%);
+
+    --neutral: hsl(30 8% 55%);
+    --neutral-foreground: hsl(30 8% 72%);
+    --neutral-muted: hsl(25 6% 14%);
+    --neutral-border: hsl(25 6% 22%);
   }
 }
 
@@ -198,9 +201,56 @@
   * {
     @apply border-border;
   }
+
+  html {
+    background-color: var(--background);
+  }
+
   body {
     @apply bg-background text-foreground;
-    /* High density professional aesthetic */
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image: radial-gradient(
+      ellipse 90% 50% at 50% -20%,
+      color-mix(in oklab, var(--highlight) 8%, transparent),
+      transparent 70%
+    );
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  h1,
+  .font-display {
+    font-family: var(--font-display);
+    font-feature-settings: "kern" 1, "liga" 1, "onum" 1;
+  }
+}
+
+@layer utilities {
+  .page-enter {
+    animation: page-enter 0.45s ease-out;
+  }
+
+  .card-lift {
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .card-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px color-mix(in oklab, var(--foreground) 8%, transparent);
+  }
+
+  .signal-card {
+    border-left: 2px solid var(--highlight);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

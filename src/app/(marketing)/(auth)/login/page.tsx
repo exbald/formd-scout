@@ -18,11 +18,10 @@ export default async function LoginPage({
   const { reset } = await searchParams;
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>Sign in to your account</CardDescription>
+          <CardTitle className="font-display text-2xl italic">Welcome back</CardTitle>
+          <CardDescription>Sign in to your private desk</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           {reset === "success" && (
@@ -32,7 +31,6 @@ export default async function LoginPage({
           )}
           <SignInButton />
         </CardContent>
-      </Card>
-    </div>
+    </Card>
   );
 }

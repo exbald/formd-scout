@@ -54,7 +54,7 @@ const Code: Components["code"] = ({ children, className, ...props }) => {
     );
   }
   return (
-    <pre className="bg-muted mb-3 w-full overflow-x-auto rounded-[0.15rem] p-3">
+    <pre className="bg-muted mb-3 w-full overflow-x-auto rounded-md p-3">
       <code className="text-xs leading-5" {...props}>
         {children}
       </code>
@@ -167,7 +167,7 @@ function CopyButton({ text }: { text: string }) {
 
 function ThinkingIndicator() {
   return (
-    <div className="bg-muted flex max-w-[80%] items-center gap-2 rounded-[0.15rem] p-3">
+    <div className="bg-muted flex max-w-[80%] items-center gap-2 rounded-md p-3">
       <Loader2 className="h-4 w-4 animate-spin" />
       <span className="text-muted-foreground text-sm">AI is thinking...</span>
     </div>
@@ -247,7 +247,7 @@ export default function ChatPage() {
         </div>
 
         {error && (
-          <div className="bg-destructive/10 border-destructive/20 mb-4 rounded-[0.15rem] border p-4">
+          <div className="bg-destructive/10 border-destructive/20 mb-4 rounded-md border p-4">
             <p className="text-destructive text-sm">
               Error: {error.message || "Something went wrong"}
             </p>
@@ -268,7 +268,7 @@ export default function ChatPage() {
             return (
               <div
                 key={message.id}
-                className={`group rounded-[0.15rem] p-3 ${
+                className={`group rounded-md p-3 ${
                   message.role === "user"
                     ? "bg-primary text-primary-foreground ml-auto max-w-[80%]"
                     : "bg-muted max-w-[80%]"
@@ -308,7 +308,7 @@ export default function ChatPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message..."
-            className="border-border focus:ring-ring flex-1 rounded-[0.15rem] border p-2 focus:ring-2 focus:outline-none"
+            className="border-border focus:ring-ring flex-1 rounded-md border p-2 focus:ring-2 focus:outline-none"
             disabled={isStreaming}
           />
           <Button type="submit" disabled={!input.trim() || isStreaming}>
